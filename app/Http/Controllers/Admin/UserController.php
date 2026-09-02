@@ -40,9 +40,8 @@ class UserController extends Controller
         $projects = Project::where('is_active', true)->get();
         // Only 1 Super Admin allowed in system; all other staff are Admin or custom roles
         $roles = Role::where('slug', '!=', 'super_admin')->get();
-        $nextUserCode = $this->autoNumberService->peekNextNumber('user', $company?->id);
 
-        return view('admin.users.create', compact('company', 'companies', 'projects', 'roles', 'nextUserCode'));
+        return view('admin.users.create', compact('company', 'companies', 'projects', 'roles'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -66,6 +65,17 @@ class UserController extends Controller
         }
 
         $companyId = (int)$validated['company_id'];
+        
+        // Filter assigned_project_ids to ensure they strictly belong to the chosen company
+        $assignedProjectIds = [];
+        if (!empty($validated['assigned_project_ids'])) {
+            $assignedProjectIds = Project::where('company_id', $companyId)
+                ->whereIn('id', $validated['assigned_project_ids'])
+                ->pluck('id')
+                ->map(fn($id) => (int)$id)
+                ->toArray();
+        }
+
         $userCode = $this->autoNumberService->getNextNumber('user', $companyId, true);
 
         $user = User::create([
@@ -78,14 +88,14 @@ class UserController extends Controller
             'email'                => $validated['email'],
             'password'             => Hash::make($validated['password']),
             'role'                 => $role->slug,
-            'assigned_project_ids' => $validated['assigned_project_ids'] ?? [],
+            'assigned_project_ids' => $assignedProjectIds,
             'is_active'            => true,
         ]);
 
         return redirect()->route('admin.users.index')->with('created_user', [
             'code' => $user->user_code,
             'name' => $user->name,
-        ])->with('success', "User created successfully! User ID: {$user->user_code}");
+        ])->with('success', "User created successfully!");
     }
 
     public function edit(User $user): View
@@ -128,15 +138,25 @@ class UserController extends Controller
             $role = $superAdminRole ?? $role;
         }
 
+        $companyId = (int)$validated['company_id'];
+        $assignedProjectIds = [];
+        if (!empty($validated['assigned_project_ids'])) {
+            $assignedProjectIds = Project::where('company_id', $companyId)
+                ->whereIn('id', $validated['assigned_project_ids'])
+                ->pluck('id')
+                ->map(fn($id) => (int)$id)
+                ->toArray();
+        }
+
         $updateData = [
-            'company_id'           => $validated['company_id'],
+            'company_id'           => $companyId,
             'role_id'              => $role->id,
             'name'                 => $validated['name'],
             'designation'          => $validated['designation'],
             'mobile'               => $validated['mobile'],
             'email'                => $validated['email'],
             'role'                 => $role->slug,
-            'assigned_project_ids' => $validated['assigned_project_ids'] ?? [],
+            'assigned_project_ids' => $assignedProjectIds,
             'is_active'            => $request->boolean('is_active', true),
         ];
 

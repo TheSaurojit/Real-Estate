@@ -161,8 +161,8 @@ class DatabaseSeeder extends Seeder
         // 4. Configure Auto-Number Sequences
         $sequences = [
             ['company_id' => $company->id, 'entity_type' => 'bank_account', 'prefix' => 'BANK-00', 'next_number' => 1, 'padding' => 1, 'description' => 'Bank Accounts (e.g. BANK-001)'],
-            ['company_id' => $company->id, 'entity_type' => 'user', 'prefix' => 'User-', 'next_number' => 1001, 'padding' => 0, 'description' => 'User / Staff (e.g. User-1001)'],
-            ['company_id' => $company->id, 'entity_type' => 'project', 'prefix' => 'SSI/PRJ-', 'next_number' => 1001, 'padding' => 0, 'description' => 'Projects (e.g. SSI/PRJ-1001)'],
+            ['company_id' => $company->id, 'entity_type' => 'user', 'prefix' => 'SSI/USR-', 'next_number' => 1004, 'padding' => 0, 'description' => 'User / Staff (e.g. SSI/USR-1001)'],
+            ['company_id' => $company->id, 'entity_type' => 'project', 'prefix' => 'SSI/PRJ-', 'next_number' => 1003, 'padding' => 0, 'description' => 'Projects (e.g. SSI/PRJ-1001)'],
             ['company_id' => $company->id, 'entity_type' => 'booking', 'prefix' => 'SSI/BK-', 'next_number' => 1001, 'padding' => 0, 'description' => 'Customer Bookings (e.g. SSI/BK-1001)'],
             ['company_id' => $company->id, 'entity_type' => 'receipt', 'prefix' => 'SSI/RCD', 'next_number' => 1001, 'padding' => 0, 'description' => 'Money Receipts / Receipt Vouchers (e.g. SSI/RCD1001)'],
             ['company_id' => $company->id, 'entity_type' => 'payment', 'prefix' => 'SSI/PMT', 'next_number' => 1001, 'padding' => 0, 'description' => 'Payment / Refund Vouchers (e.g. SSI/PMT1001)'],
@@ -267,7 +267,7 @@ class DatabaseSeeder extends Seeder
             [
                 'company_id'           => $company->id,
                 'role_id'              => $superAdminRole->id,
-                'user_code'            => 'User-1001',
+                'user_code'            => 'SSI/USR-1001',
                 'name'                 => 'Subhasish Das',
                 'designation'          => 'Managing Director',
                 'mobile'               => '+91-9382445935',
@@ -283,7 +283,7 @@ class DatabaseSeeder extends Seeder
             [
                 'company_id'           => $company->id,
                 'role_id'              => $adminRole->id,
-                'user_code'            => 'User-1002',
+                'user_code'            => 'SSI/USR-1002',
                 'name'                 => 'Admin Officer',
                 'designation'          => 'General Manager',
                 'mobile'               => '+91-9876543210',
@@ -299,7 +299,7 @@ class DatabaseSeeder extends Seeder
             [
                 'company_id'           => $company->id,
                 'role_id'              => $managerRole->id,
-                'user_code'            => 'User-1003',
+                'user_code'            => 'SSI/USR-1003',
                 'name'                 => 'Rahul Sharma',
                 'designation'          => 'Project Sales Manager',
                 'mobile'               => '+91-9123456780',

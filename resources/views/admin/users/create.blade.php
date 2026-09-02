@@ -34,13 +34,34 @@
                     <p class="text-[11px] text-violet-100">User Master Setup</p>
                 </div>
             </div>
-            <div class="text-right">
-                <span class="text-[10px] text-violet-200 uppercase tracking-wider block">Auto-Generated ID</span>
-                <span class="text-sm font-mono font-bold bg-black/25 px-2.5 py-0.5 rounded text-white">{{ $nextUserCode }}</span>
-            </div>
         </div>
 
-        <form action="{{ route('admin.users.store') }}" method="POST" class="p-6 sm:p-8 space-y-6">
+        @php
+            $defaultCompanyId = (string)old('company_id', $companies->count() === 1 ? $companies->first()->id : '');
+            $initialProjects = array_map('intval', (array)old('assigned_project_ids', []));
+            $projectsJson = $projects->map(fn($p) => [
+                'id' => $p->id,
+                'company_id' => (string)$p->company_id,
+                'name' => $p->name,
+                'project_code' => $p->project_code,
+            ]);
+        @endphp
+
+        <form action="{{ route('admin.users.store') }}" 
+              method="POST" 
+              class="p-6 sm:p-8 space-y-6"
+              x-data="{
+                  selectedCompany: '{{ $defaultCompanyId }}',
+                  selectedProjects: {{ json_encode($initialProjects) }},
+                  allProjects: {{ $projectsJson->toJson() }},
+                  get companyProjects() {
+                      return this.allProjects.filter(p => String(p.company_id) === String(this.selectedCompany));
+                  },
+                  onCompanyChange() {
+                      const validIds = this.companyProjects.map(p => p.id);
+                      this.selectedProjects = this.selectedProjects.filter(id => validIds.includes(Number(id)));
+                  }
+              }">
             @csrf
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -50,11 +71,15 @@
                     <label for="company_id" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                         Company Name <span class="text-rose-500">*</span>
                     </label>
-                    <select id="company_id" name="company_id" required
+                    <select id="company_id" 
+                            name="company_id" 
+                            required
+                            x-model="selectedCompany"
+                            @change="onCompanyChange()"
                             class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-violet-500 focus:border-transparent transition cursor-pointer">
                         <option value="" disabled {{ old('company_id') ? '' : 'selected' }}>-- Select Company --</option>
                         @foreach($companies as $comp)
-                            <option value="{{ $comp->id }}" {{ old('company_id') == $comp->id ? 'selected' : '' }}>
+                            <option value="{{ $comp->id }}" {{ old('company_id', $defaultCompanyId) == (string)$comp->id ? 'selected' : '' }}>
                                 {{ $comp->name }} ({{ $comp->company_code }})
                             </option>
                         @endforeach
@@ -89,7 +114,7 @@
                     <select id="role_id" name="role_id" required
                             class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-violet-500 focus:border-transparent transition">
                         @foreach($roles as $r)
-                            <option value="{{ $r->id }}" {{ old('role_id') == $r->id ? 'selected' : ($r->slug === 'admin' ? 'selected' : '') }}>
+                            <option value="{{ $r->id }}" {{ old('role_id', $roles->firstWhere('slug', 'admin')?->id) == $r->id ? 'selected' : '' }}>
                                 {{ $r->name }} ({{ $r->slug }})
                             </option>
                         @endforeach
@@ -139,19 +164,44 @@
 
                 <!-- Assigned Projects -->
                 <div class="md:col-span-2">
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
-                        Assigned Projects Permission (Multi-Select)
-                    </label>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                        @foreach($projects as $proj)
-                            <label class="flex items-center space-x-2.5 p-2 rounded-lg hover:bg-white transition cursor-pointer">
-                                <input type="checkbox" name="assigned_project_ids[]" value="{{ $proj->id }}"
-                                       class="w-4 h-4 rounded text-violet-600 border-slate-300 focus:ring-violet-500">
-                                <span class="text-xs font-semibold text-slate-700">
-                                    🏢 {{ $proj->name }} <span class="text-slate-400 font-mono">({{ $proj->project_code }})</span>
-                                </span>
-                            </label>
-                        @endforeach
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                            Assigned Projects Permission (Multi-Select)
+                        </label>
+                        <span x-show="selectedCompany && companyProjects.length > 0" 
+                              class="text-[11px] font-medium text-slate-400" 
+                              x-text="selectedProjects.length + ' selected'">
+                        </span>
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 min-h-[80px] flex items-center justify-center">
+                        
+                        <!-- No Company Selected -->
+                        <div x-show="!selectedCompany" class="py-3 text-center text-xs text-slate-400">
+                            <i class="fa-solid fa-arrow-up mr-1 text-slate-400"></i> Please select a company above to view and assign its projects.
+                        </div>
+
+                        <!-- Selected Company Has No Projects -->
+                        <div x-show="selectedCompany && companyProjects.length === 0" class="py-3 text-center text-xs text-slate-400">
+                            <i class="fa-solid fa-circle-info mr-1 text-amber-500"></i> No active projects found for the selected company.
+                        </div>
+
+                        <!-- Projects Grid for Selected Company -->
+                        <div x-show="selectedCompany && companyProjects.length > 0" class="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <template x-for="proj in companyProjects" :key="proj.id">
+                                <label class="flex items-center space-x-2.5 p-2.5 rounded-lg bg-white hover:bg-slate-100/80 border border-slate-200/80 shadow-xs transition cursor-pointer">
+                                    <input type="checkbox" 
+                                           name="assigned_project_ids[]" 
+                                           :value="proj.id"
+                                           x-model.number="selectedProjects"
+                                           class="w-4 h-4 rounded text-violet-600 border-slate-300 focus:ring-violet-500 cursor-pointer">
+                                    <span class="text-xs font-semibold text-slate-700">
+                                        🏢 <span x-text="proj.name"></span> 
+                                        <span class="text-slate-400 font-mono" x-text="'(' + proj.project_code + ')'"></span>
+                                    </span>
+                                </label>
+                            </template>
+                        </div>
                     </div>
                 </div>
 

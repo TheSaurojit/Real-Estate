@@ -51,7 +51,7 @@ class PhaseOneTest extends TestCase
 
         $this->adminUser = User::create([
             'company_id' => $this->company->id,
-            'user_code' => 'User-1001',
+            'user_code' => 'SSI/USR-1001',
             'name' => 'Subhasish Das',
             'designation' => 'Manager',
             'mobile' => '+91-9382445935',
@@ -85,7 +85,7 @@ class PhaseOneTest extends TestCase
     public function test_user_can_login_using_user_code(): void
     {
         $response = $this->post(route('login.submit'), [
-            'login_id' => 'User-1001',
+            'login_id' => 'SSI/USR-1001',
             'password' => 'password',
         ]);
 

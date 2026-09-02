@@ -71,7 +71,7 @@ class CompanyController extends Controller
         // Initialize default auto-number sequences for this new company
         $defaultTypes = [
             'bank_account' => ['prefix' => 'BANK-00', 'next_number' => 1, 'padding' => 1, 'description' => 'Bank Accounts (e.g. BANK-001)'],
-            'user'         => ['prefix' => 'User-', 'next_number' => 1001, 'padding' => 0, 'description' => 'Staff Users (e.g. User-1001)'],
+            'user'         => ['prefix' => $company->company_code . '/USR-', 'next_number' => 1001, 'padding' => 0, 'description' => 'Staff Users (e.g. ' . $company->company_code . '/USR-1001)'],
             'project'      => ['prefix' => $company->company_code . '/PRJ-', 'next_number' => 1001, 'padding' => 0, 'description' => 'Projects (e.g. ' . $company->company_code . '/PRJ-1001)'],
             'booking'      => ['prefix' => $company->company_code . '/BK-', 'next_number' => 1001, 'padding' => 0, 'description' => 'Bookings (e.g. ' . $company->company_code . '/BK-1001)'],
             'receipt'      => ['prefix' => $company->company_code . '/RCD', 'next_number' => 1001, 'padding' => 0, 'description' => 'Money Receipts (e.g. ' . $company->company_code . '/RCD1001)'],

@@ -39,7 +39,7 @@ class RoleAndCompanyManagementTest extends TestCase
         AutoNumberSequence::create([
             'company_id' => $this->company->id,
             'entity_type' => 'user',
-            'prefix' => 'User-',
+            'prefix' => 'SSI/USR-',
             'next_number' => 1003,
             'padding' => 0,
         ]);
@@ -71,11 +71,11 @@ class RoleAndCompanyManagementTest extends TestCase
         ]);
         $this->managerRole->permissions()->sync([$perm2->id]);
 
-        // 4. Seed Single Super Admin User (User-1001)
+        // 4. Seed Single Super Admin User (SSI/USR-1001)
         $this->superAdmin = User::create([
             'company_id' => $this->company->id,
             'role_id' => $this->superAdminRole->id,
-            'user_code' => 'User-1001',
+            'user_code' => 'SSI/USR-1001',
             'name' => 'Subhasish Das',
             'email' => 's4subhasish@gmail.com',
             'password' => Hash::make('password'),
@@ -83,11 +83,11 @@ class RoleAndCompanyManagementTest extends TestCase
             'is_active' => true,
         ]);
 
-        // 5. Seed Regular Manager User (User-1002)
+        // 5. Seed Regular Manager User (SSI/USR-1002)
         $this->regularManager = User::create([
             'company_id' => $this->company->id,
             'role_id' => $this->managerRole->id,
-            'user_code' => 'User-1002',
+            'user_code' => 'SSI/USR-1002',
             'name' => 'Sales Manager',
             'email' => 'manager@test.com',
             'password' => Hash::make('password'),
@@ -248,5 +248,103 @@ class RoleAndCompanyManagementTest extends TestCase
         ]);
         $responseUpdate->assertRedirect(route('admin.roles.index'));
         $responseUpdate->assertSessionHasErrors('error');
+    }
+
+    public function test_user_creation_page_renders_and_does_not_show_auto_generated_user_id(): void
+    {
+        $this->actingAs($this->superAdmin);
+
+        $response = $this->get(route('admin.users.create'));
+        $response->assertStatus(200);
+        $response->assertDontSee('Auto-Generated ID');
+        $response->assertSee('Create User Account');
+    }
+
+    public function test_creating_user_in_different_company_avoids_user_code_collision(): void
+    {
+        $this->actingAs($this->superAdmin);
+
+        // Create a second company
+        $company2 = Company::create([
+            'company_code' => 'COMP2',
+            'name' => 'Second Company Ltd',
+            'contact_primary' => '+91-9123456789',
+            'address' => 'Silchar',
+        ]);
+
+        // AutoNumberSequence for company2 is uninitialized or starts at 1001
+        // Submitting user create for company2 should generate COMP2/USR-1001
+        $response = $this->post(route('admin.users.store'), [
+            'company_id' => $company2->id,
+            'role_id' => $this->adminRole->id,
+            'name' => 'Sayan Kr',
+            'designation' => 'Site Engineer',
+            'mobile' => '+91-9395340221',
+            'email' => 'sayankr@gmail.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ]);
+
+        $response->assertRedirect(route('admin.users.index'));
+        $this->assertDatabaseHas('users', [
+            'email' => 'sayankr@gmail.com',
+            'company_id' => $company2->id,
+        ]);
+
+        $createdUser = User::where('email', 'sayankr@gmail.com')->first();
+        $this->assertNotNull($createdUser->user_code);
+        // Company 2 starts its own sequence at COMP2/USR-1001
+        $this->assertEquals('COMP2/USR-1001', $createdUser->user_code);
+    }
+
+    public function test_assigned_projects_are_strictly_filtered_by_selected_company(): void
+    {
+        $this->actingAs($this->superAdmin);
+
+        // Project 1 belongs to Company 1
+        $project1 = \App\Models\Project::create([
+            'company_id' => $this->company->id,
+            'project_code' => 'SSI/PRJ-01',
+            'name' => 'Company 1 Tower',
+            'nick_name' => 'C1T',
+            'full_address' => 'Silchar',
+            'is_active' => true,
+        ]);
+
+        // Company 2 and Project 2
+        $company2 = Company::create([
+            'company_code' => 'C2',
+            'name' => 'Company 2 Ltd',
+            'contact_primary' => '+91-9123456789',
+            'address' => 'Silchar',
+        ]);
+
+        $project2 = \App\Models\Project::create([
+            'company_id' => $company2->id,
+            'project_code' => 'C2/PRJ-01',
+            'name' => 'Company 2 Residency',
+            'nick_name' => 'C2R',
+            'full_address' => 'Guwahati',
+            'is_active' => true,
+        ]);
+
+        // Try to assign both project1 (from company1) and project2 (from company2) to a user in company2
+        $response = $this->post(route('admin.users.store'), [
+            'company_id' => $company2->id,
+            'role_id' => $this->adminRole->id,
+            'name' => 'Cross Company Test Staff',
+            'designation' => 'Supervisor',
+            'mobile' => '+91-9876543299',
+            'email' => 'cross_staff@test.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'assigned_project_ids' => [$project1->id, $project2->id],
+        ]);
+
+        $response->assertRedirect(route('admin.users.index'));
+        $createdUser = User::where('email', 'cross_staff@test.com')->first();
+        $this->assertNotNull($createdUser);
+        // Only project2 from company2 should be stored in assigned_project_ids
+        $this->assertEquals([$project2->id], $createdUser->assigned_project_ids);
     }
 }

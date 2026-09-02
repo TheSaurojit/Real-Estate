@@ -248,7 +248,7 @@
                 </div>
             @endif
 
-            <!-- Modal for Auto-Generated ID Alert (Matching PDF specifications) -->
+            <!-- Modal Alerts -->
             @if(session('created_project'))
                 <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in" x-data="{ open: true }" x-show="open">
                     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center border border-slate-200" @click.away="open = false">

@@ -54,7 +54,7 @@
                             <i class="fa-solid fa-user"></i>
                         </div>
                         <input type="text" id="login_id" name="login_id" value="{{ old('login_id', 's4subhasish@gmail.com') }}" required autofocus
-                               placeholder="e.g. User-1001 or email@domain.com"
+                               placeholder="e.g. SSI/USR-1001 or email@domain.com"
                                class="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition">
                     </div>
                     <p class="text-[11px] text-slate-400 mt-1">Enter your auto-assigned User ID or registered Email</p>

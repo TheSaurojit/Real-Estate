@@ -3,30 +3,58 @@
 namespace App\Services;
 
 use App\Models\AutoNumberSequence;
+use App\Models\BankAccount;
 use App\Models\Company;
+use App\Models\Project;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class AutoNumberService
 {
     /**
+     * Entity mapping to Model and column for collision checking
+     */
+    protected static array $entityModelMap = [
+        'user'         => [User::class, 'user_code'],
+        'bank_account' => [BankAccount::class, 'account_code'],
+        'project'      => [Project::class, 'project_code'],
+    ];
+
+    /**
      * Get default settings for each entity type if not yet created in database
      */
-    public static function getDefaultSettings(string $entityType): array
+    public static function getDefaultSettings(string $entityType, ?Company $company = null): array
     {
+        $companyCode = $company?->company_code ?? 'SSI';
+
         $defaults = [
             'bank_account' => ['prefix' => 'BANK-00', 'next_number' => 1, 'padding' => 1, 'description' => 'Bank Account Code'],
-            'user'         => ['prefix' => 'User-',   'next_number' => 1001, 'padding' => 0, 'description' => 'User ID / Employee Code'],
-            'project'      => ['prefix' => 'PRJ-00',  'next_number' => 1, 'padding' => 1, 'description' => 'Project Code'],
-            'booking'      => ['prefix' => 'SSI/BK-', 'next_number' => 1001, 'padding' => 0, 'description' => 'Booking ID'],
-            'receipt'      => ['prefix' => 'SSI/RCD', 'next_number' => 1001, 'padding' => 0, 'description' => 'Money Receipt / Transaction ID'],
-            'payment'      => ['prefix' => 'SSI/PMT', 'next_number' => 1001, 'padding' => 0, 'description' => 'Payment Voucher ID'],
+            'user'         => ['prefix' => $companyCode . '/USR-', 'next_number' => 1001, 'padding' => 0, 'description' => 'User ID / Employee Code (e.g. ' . $companyCode . '/USR-1001)'],
+            'project'      => ['prefix' => $companyCode . '/PRJ-', 'next_number' => 1001, 'padding' => 0, 'description' => 'Project Code'],
+            'booking'      => ['prefix' => $companyCode . '/BK-',  'next_number' => 1001, 'padding' => 0, 'description' => 'Booking ID'],
+            'receipt'      => ['prefix' => $companyCode . '/RCD',  'next_number' => 1001, 'padding' => 0, 'description' => 'Money Receipt / Transaction ID'],
+            'payment'      => ['prefix' => $companyCode . '/PMT',  'next_number' => 1001, 'padding' => 0, 'description' => 'Payment Voucher ID'],
         ];
 
         return $defaults[$entityType] ?? ['prefix' => strtoupper($entityType) . '-', 'next_number' => 1, 'padding' => 3, 'description' => ucfirst($entityType)];
     }
 
     /**
-     * Generate next sequential code safely with database locking
+     * Check if a generated code already exists in the database
+     */
+    public function codeExists(string $entityType, string $code): bool
+    {
+        if (isset(self::$entityModelMap[$entityType])) {
+            [$modelClass, $column] = self::$entityModelMap[$entityType];
+            if (class_exists($modelClass)) {
+                return $modelClass::where($column, $code)->exists();
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Generate next sequential code safely with database locking & collision prevention
      */
     public function getNextNumber(string $entityType, ?int $companyId = null, bool $increment = true): string
     {
@@ -45,8 +73,9 @@ class AutoNumberService
             }
 
             if (!$sequence) {
-                // Create with defaults
-                $defaults = self::getDefaultSettings($entityType);
+                // Create with company-specific defaults
+                $company = $companyId ? Company::find($companyId) : null;
+                $defaults = self::getDefaultSettings($entityType, $company);
                 $sequence = AutoNumberSequence::create([
                     'company_id'  => $companyId,
                     'entity_type' => $entityType,
@@ -58,14 +87,23 @@ class AutoNumberService
             }
 
             $currentNumber = $sequence->next_number;
-            $paddedNumber = $sequence->padding > 0
-                ? str_pad((string)$currentNumber, $sequence->padding, '0', STR_PAD_LEFT)
-                : (string)$currentNumber;
 
-            $generatedCode = $sequence->prefix . $paddedNumber;
+            // Advance until an unused code is found to strictly prevent duplicate key collisions
+            do {
+                $paddedNumber = $sequence->padding > 0
+                    ? str_pad((string)$currentNumber, $sequence->padding, '0', STR_PAD_LEFT)
+                    : (string)$currentNumber;
+
+                $generatedCode = $sequence->prefix . $paddedNumber;
+                $exists = $this->codeExists($entityType, $generatedCode);
+
+                if ($exists) {
+                    $currentNumber++;
+                }
+            } while ($exists);
 
             if ($increment) {
-                $sequence->increment('next_number');
+                $sequence->update(['next_number' => $currentNumber + 1]);
             }
 
             return $generatedCode;
@@ -84,19 +122,24 @@ class AutoNumberService
             })
             ->first();
 
-        if (!$sequence) {
-            $defaults = self::getDefaultSettings($entityType);
-            $padded = $defaults['padding'] > 0
-                ? str_pad((string)$defaults['next_number'], $defaults['padding'], '0', STR_PAD_LEFT)
-                : (string)$defaults['next_number'];
-            return $defaults['prefix'] . $padded;
-        }
+        $company = $companyId ? Company::find($companyId) : null;
+        $defaults = self::getDefaultSettings($entityType, $company);
+        $prefix = $sequence?->prefix ?? $defaults['prefix'];
+        $padding = $sequence?->padding ?? $defaults['padding'];
+        $currentNumber = $sequence?->next_number ?? $defaults['next_number'];
 
-        $padded = $sequence->padding > 0
-            ? str_pad((string)$sequence->next_number, $sequence->padding, '0', STR_PAD_LEFT)
-            : (string)$sequence->next_number;
+        do {
+            $padded = $padding > 0
+                ? str_pad((string)$currentNumber, $padding, '0', STR_PAD_LEFT)
+                : (string)$currentNumber;
+            $candidate = $prefix . $padded;
+            $exists = $this->codeExists($entityType, $candidate);
+            if ($exists) {
+                $currentNumber++;
+            }
+        } while ($exists);
 
-        return $sequence->prefix . $padded;
+        return $candidate;
     }
 
     /**
