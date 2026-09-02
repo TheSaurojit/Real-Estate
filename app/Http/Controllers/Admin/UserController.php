@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\AutoNumberService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
@@ -175,7 +176,7 @@ class UserController extends Controller
             return back()->withErrors(['error' => 'The primary Super Admin account cannot be deleted.']);
         }
 
-        if ($user->id === auth()->id()) {
+        if ($user->id === Auth::id()) {
             return back()->withErrors(['error' => 'You cannot delete your own logged-in user account.']);
         }
 

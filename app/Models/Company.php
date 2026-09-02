@@ -41,4 +41,9 @@ class Company extends Model
     {
         return $this->hasMany(AutoNumberSequence::class);
     }
+
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
 }

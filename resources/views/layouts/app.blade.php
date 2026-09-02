@@ -141,24 +141,28 @@
                             <div class="px-3 pt-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                                 Project Modules
                             </div>
-                            <a href="#" class="flex items-center px-3 py-2 rounded-lg font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
-                                <i class="fa-solid fa-file-signature w-6 text-slate-500"></i>
-                                <span>Bookings</span>
+                            <a href="{{ route('project.bookings.index', $currentProject->id) }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('project.bookings.*') ? 'bg-sky-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                                <i class="fa-solid fa-file-signature w-6 text-sky-400"></i>
+                                <span>Bookings Master</span>
                             </a>
-                            <a href="#" class="flex items-center px-3 py-2 rounded-lg font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
-                                <i class="fa-solid fa-money-bill-transfer w-6 text-slate-500"></i>
-                                <span>Transactions</span>
+                            <a href="{{ route('project.transactions.index', $currentProject->id) }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('project.transactions.*') ? 'bg-sky-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                                <i class="fa-solid fa-money-bill-transfer w-6 text-emerald-400"></i>
+                                <span>Transactions Ledger</span>
                             </a>
-                            <a href="#" class="flex items-center px-3 py-2 rounded-lg font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
-                                <i class="fa-solid fa-sliders w-6 text-slate-500"></i>
-                                <span>Customization</span>
+                            <a href="{{ route('project.expenses.index', $currentProject->id) }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('project.expenses.*') ? 'bg-sky-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                                <i class="fa-solid fa-cart-flatbed w-6 text-cyan-400"></i>
+                                <span>Site Expenses</span>
                             </a>
-                            <a href="#" class="flex items-center px-3 py-2 rounded-lg font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
-                                <i class="fa-solid fa-chart-pie w-6 text-slate-500"></i>
-                                <span>View Reports</span>
+                            <a href="{{ route('project.stock-transfers.index', $currentProject->id) }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('project.stock-transfers.*') ? 'bg-sky-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                                <i class="fa-solid fa-truck-ramp-box w-6 text-teal-400"></i>
+                                <span>Stock Transfers</span>
                             </a>
-                            <a href="#" class="flex items-center px-3 py-2 rounded-lg font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
-                                <i class="fa-solid fa-print w-6 text-slate-500"></i>
+                            <a href="{{ route('project.reports.index', $currentProject->id) }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('project.reports.*') ? 'bg-sky-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                                <i class="fa-solid fa-chart-pie w-6 text-violet-400"></i>
+                                <span>Executive Reports</span>
+                            </a>
+                            <a href="{{ route('project.documents.index', $currentProject->id) }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('project.documents.*') ? 'bg-sky-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                                <i class="fa-solid fa-print w-6 text-rose-400"></i>
                                 <span>Print Documents</span>
                             </a>
                         </nav>

@@ -90,7 +90,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
         <!-- Module 1: Bookings Management -->
-        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between hover:shadow-md transition group">
+        <a href="{{ route('project.bookings.index', $project->id) }}" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between hover:shadow-md hover:border-sky-300 transition group cursor-pointer">
             <div>
                 <div class="flex items-center justify-between mb-4">
                     <div class="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center text-xl group-hover:bg-sky-600 group-hover:text-white transition">
@@ -100,7 +100,7 @@
                         Section 2.2
                     </span>
                 </div>
-                <h3 class="text-lg font-bold text-slate-800 mb-1">Bookings & Property Units</h3>
+                <h3 class="text-lg font-bold text-slate-800 mb-1 group-hover:text-sky-600 transition">Bookings & Property Units</h3>
                 <p class="text-xs text-slate-500 mb-4 leading-relaxed">
                     Book flats on the fly without static inventory constraints. Configure blocks, floors, units, area, rate, parking, and customer info.
                 </p>
@@ -130,10 +130,10 @@
                     <i class="fa-solid fa-arrow-right text-[10px]"></i>
                 </span>
             </div>
-        </div>
+        </a>
 
         <!-- Module 2: Booking Customization (Job Sheets) -->
-        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between hover:shadow-md transition group">
+        <a href="{{ route('project.bookings.index', $project->id) }}" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between hover:shadow-md hover:border-amber-300 transition group cursor-pointer">
             <div>
                 <div class="flex items-center justify-between mb-4">
                     <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl group-hover:bg-amber-600 group-hover:text-white transition">
@@ -143,7 +143,7 @@
                         Section 2.2.4
                     </span>
                 </div>
-                <h3 class="text-lg font-bold text-slate-800 mb-1">Customization Job Sheets</h3>
+                <h3 class="text-lg font-bold text-slate-800 mb-1 group-hover:text-amber-600 transition">Customization Job Sheets</h3>
                 <p class="text-xs text-slate-500 mb-4 leading-relaxed">
                     Track custom flat alterations beyond builder specifications: Add-on work (material + labor) and Dislodge/Deductions with adjusted supplementary value.
                 </p>
@@ -169,10 +169,10 @@
                     <i class="fa-solid fa-arrow-right text-[10px]"></i>
                 </span>
             </div>
-        </div>
+        </a>
 
         <!-- Module 3: Dual-Ledger Transactions -->
-        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between hover:shadow-md transition group">
+        <a href="{{ route('project.transactions.index', $project->id) }}" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between hover:shadow-md hover:border-emerald-300 transition group cursor-pointer">
             <div>
                 <div class="flex items-center justify-between mb-4">
                     <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl group-hover:bg-emerald-600 group-hover:text-white transition">
@@ -182,7 +182,7 @@
                         Section 2.3
                     </span>
                 </div>
-                <h3 class="text-lg font-bold text-slate-800 mb-1">Financial Transactions</h3>
+                <h3 class="text-lg font-bold text-slate-800 mb-1 group-hover:text-emerald-600 transition">Financial Transactions</h3>
                 <p class="text-xs text-slate-500 mb-4 leading-relaxed">
                     Dual accountability engine: Money Receipts (Taxable Bank/GST) and Receipt Vouchers (Cash), Payment Adjustments, and Bounced Cheques.
                 </p>
@@ -206,16 +206,16 @@
                 </div>
             </div>
             <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                <span class="text-xs font-semibold text-slate-400">Dual Accountability</span>
+                <span class="text-xs font-semibold text-slate-400">Phase 3 Engine</span>
                 <span class="inline-flex items-center space-x-1 text-xs font-bold text-emerald-600 group-hover:translate-x-1 transition">
-                    <span>Transactions</span>
+                    <span>Manage Transactions</span>
                     <i class="fa-solid fa-arrow-right text-[10px]"></i>
                 </span>
             </div>
-        </div>
+        </a>
 
         <!-- Module 4: View Reports -->
-        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between hover:shadow-md transition group">
+        <a href="{{ route('project.reports.index', $project->id) }}" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between hover:shadow-md hover:border-violet-300 transition group cursor-pointer">
             <div>
                 <div class="flex items-center justify-between mb-4">
                     <div class="w-12 h-12 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center text-xl group-hover:bg-violet-600 group-hover:text-white transition">
@@ -225,22 +225,22 @@
                         Section 2.4
                     </span>
                 </div>
-                <h3 class="text-lg font-bold text-slate-800 mb-1">Reports & Accountability</h3>
+                <h3 class="text-lg font-bold text-slate-800 mb-1 group-hover:text-violet-600 transition">Reports & Accountability</h3>
                 <p class="text-xs text-slate-500 mb-4 leading-relaxed">
-                    Real-time analytics: General & Financial Booking reports, Collections (Bank vs Cash), Refunds, Banking instruments, and Defaulters.
+                    Real-time analytics: Profitability, General & Financial Booking reports, Collections, Escrow flows, and Defaulters.
                 </p>
                 <div class="space-y-1.5 text-xs text-slate-600 border-t border-slate-100 pt-3">
                     <div class="flex items-center space-x-2">
                         <i class="fa-solid fa-check text-violet-500 text-[10px]"></i>
-                        <span>Active vs Cancelled Bookings</span>
+                        <span>Project Profitability & Cost vs Revenue</span>
                     </div>
                     <div class="flex items-center space-x-2">
                         <i class="fa-solid fa-check text-violet-500 text-[10px]"></i>
-                        <span>Taxable vs Cash Financial Split</span>
+                        <span>Unit Sales & Inventory Velocity</span>
                     </div>
                     <div class="flex items-center space-x-2">
                         <i class="fa-solid fa-check text-violet-500 text-[10px]"></i>
-                        <span>Banking Instrument Clearance Pipeline</span>
+                        <span>Customer Dues & Aging Matrix</span>
                     </div>
                 </div>
             </div>
@@ -251,10 +251,10 @@
                     <i class="fa-solid fa-arrow-right text-[10px]"></i>
                 </span>
             </div>
-        </div>
+        </a>
 
         <!-- Module 5: Print Documents -->
-        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between hover:shadow-md transition group">
+        <a href="{{ route('project.documents.index', $project->id) }}" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between hover:shadow-md hover:border-rose-300 transition group cursor-pointer">
             <div>
                 <div class="flex items-center justify-between mb-4">
                     <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl group-hover:bg-rose-600 group-hover:text-white transition">
@@ -264,7 +264,7 @@
                         Section 2.5
                     </span>
                 </div>
-                <h3 class="text-lg font-bold text-slate-800 mb-1">Print Documents & Letters</h3>
+                <h3 class="text-lg font-bold text-slate-800 mb-1 group-hover:text-rose-600 transition">Print Documents & Letters</h3>
                 <p class="text-xs text-slate-500 mb-4 leading-relaxed">
                     12 print-ready corporate document templates with company header, logo, and digital signature stamps.
                 </p>
@@ -284,16 +284,16 @@
                 </div>
             </div>
             <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                <span class="text-xs font-semibold text-slate-400">PDF / Print Ready</span>
+                <span class="text-xs font-semibold text-slate-400">Phase 4 Engine</span>
                 <span class="inline-flex items-center space-x-1 text-xs font-bold text-rose-600 group-hover:translate-x-1 transition">
                     <span>Print Documents</span>
                     <i class="fa-solid fa-arrow-right text-[10px]"></i>
                 </span>
             </div>
-        </div>
+        </a>
 
         <!-- Module 6: Track Expense -->
-        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between hover:shadow-md transition group">
+        <a href="{{ route('project.expenses.index', $project->id) }}" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between hover:shadow-md hover:border-cyan-300 transition group cursor-pointer">
             <div>
                 <div class="flex items-center justify-between mb-4">
                     <div class="w-12 h-12 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center text-xl group-hover:bg-cyan-600 group-hover:text-white transition">
@@ -303,7 +303,7 @@
                         Section 2.6
                     </span>
                 </div>
-                <h3 class="text-lg font-bold text-slate-800 mb-1">Track Construction Expense</h3>
+                <h3 class="text-lg font-bold text-slate-800 mb-1 group-hover:text-cyan-600 transition">Track Construction Expense</h3>
                 <p class="text-xs text-slate-500 mb-4 leading-relaxed">
                     Site procurement, raw materials purchases, contractor payments, inter-site stock transfers, and supplier ledger.
                 </p>
@@ -329,7 +329,7 @@
                     <i class="fa-solid fa-arrow-right text-[10px]"></i>
                 </span>
             </div>
-        </div>
+        </a>
 
     </div>
 

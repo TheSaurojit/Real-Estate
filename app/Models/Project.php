@@ -41,6 +41,11 @@ class Project extends Model
         return $this->hasMany(BankAccount::class);
     }
 
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
+
     /**
      * Formatted display name for dropdowns & headers e.g. "Ramkrishna Apartment (SSI/PRJ1001)"
      */
@@ -54,7 +59,6 @@ class Project extends Model
      */
     public function canBeDeleted(): bool
     {
-        // When bookings table is created, check: return $this->bookings()->count() === 0;
-        return $this->bankAccounts()->count() === 0;
+        return $this->bankAccounts()->count() === 0 && $this->bookings()->count() === 0;
     }
 }
