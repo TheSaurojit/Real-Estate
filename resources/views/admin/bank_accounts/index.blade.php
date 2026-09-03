@@ -37,6 +37,7 @@
                 <thead class="text-xs font-bold uppercase text-slate-500 bg-slate-100/70 border-b border-slate-200">
                     <tr>
                         <th class="py-3.5 px-4">Account ID & Nick Name</th>
+                        <th class="py-3.5 px-4">Company Name</th>
                         <th class="py-3.5 px-4">Account Type & Linked Project</th>
                         <th class="py-3.5 px-4">Bank & Branch</th>
                         <th class="py-3.5 px-4">Account Number & IFSC</th>
@@ -60,6 +61,20 @@
                                 </div>
                             </td>
 
+                            <!-- Company Name -->
+                            <td class="py-4 px-4 align-top text-xs">
+                                @if($account->company)
+                                    <div class="font-bold text-slate-800 text-sm">
+                                        🏢 {{ $account->company->name }}
+                                    </div>
+                                    <div class="text-[11px] font-mono text-slate-400 mt-0.5">
+                                        Company Code: <span class="font-semibold text-slate-600">{{ $account->company->company_code }}</span>
+                                    </div>
+                                @else
+                                    <span class="text-slate-400 italic">N/A</span>
+                                @endif
+                            </td>
+
                             <!-- Account Type & Project -->
                             <td class="py-4 px-4 align-top text-xs">
                                 @if($account->account_type === 'project_linked')
@@ -67,7 +82,7 @@
                                         <i class="fa-solid fa-link mr-1"></i> RERA / Project Linked
                                     </span>
                                     <div class="mt-1 font-semibold text-slate-700">
-                                        🏢 {{ $account->project->name ?? 'N/A' }}
+                                        🏗️ {{ $account->project->name ?? 'N/A' }}
                                     </div>
                                 @elseif($account->account_type === 'cash_account')
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
@@ -117,7 +132,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="py-8 text-center text-slate-400 text-sm">
+                            <td colspan="6" class="py-8 text-center text-slate-400 text-sm">
                                 No bank accounts configured yet. <a href="{{ route('admin.bank-accounts.create') }}" class="text-emerald-600 font-semibold underline">Add one now</a>.
                             </td>
                         </tr>

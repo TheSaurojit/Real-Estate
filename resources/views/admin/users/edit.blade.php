@@ -162,12 +162,17 @@
                 <div class="md:col-span-2">
                     <div class="flex items-center justify-between mb-2">
                         <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">
-                            Assigned Projects Permission (Multi-Select)
+                            Assigned Projects Permission (Multi-Select) <span class="text-rose-500">*</span>
                         </label>
-                        <span x-show="selectedCompany && companyProjects.length > 0" 
-                              class="text-[11px] font-medium text-slate-400" 
-                              x-text="selectedProjects.length + ' selected'">
-                        </span>
+                        <div x-show="selectedCompany && companyProjects.length > 0">
+                            <span x-show="selectedProjects.length === 0" class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-100 text-rose-700 flex items-center space-x-1">
+                                <i class="fa-solid fa-triangle-exclamation text-[10px]"></i>
+                                <span>At least 1 project required</span>
+                            </span>
+                            <span x-show="selectedProjects.length > 0" class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-100 text-emerald-800" 
+                                  x-text="selectedProjects.length + ' project' + (selectedProjects.length > 1 ? 's' : '') + ' selected'">
+                            </span>
+                        </div>
                     </div>
 
                     <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 min-h-[80px] flex items-center justify-center">
@@ -178,8 +183,12 @@
                         </div>
 
                         <!-- Selected Company Has No Projects -->
-                        <div x-show="selectedCompany && companyProjects.length === 0" class="py-3 text-center text-xs text-slate-400">
-                            <i class="fa-solid fa-circle-info mr-1 text-amber-500"></i> No active projects found for the selected company.
+                        <div x-show="selectedCompany && companyProjects.length === 0" class="py-3 text-center text-xs text-slate-500">
+                            <div class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs">
+                                <i class="fa-solid fa-circle-exclamation mr-1 text-rose-600"></i>
+                                <strong>No active projects found for this company.</strong>
+                                <p class="mt-1 text-rose-600 text-[11px]">Users must be assigned to at least one project. Please create a project under this company first.</p>
+                            </div>
                         </div>
 
                         <!-- Projects Grid for Selected Company -->
@@ -199,6 +208,13 @@
                             </template>
                         </div>
                     </div>
+
+                    @error('assigned_project_ids')
+                        <p class="text-xs text-rose-500 font-semibold mt-1.5 flex items-center space-x-1">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            <span>{{ $message }}</span>
+                        </p>
+                    @enderror
                 </div>
 
             </div>

@@ -21,6 +21,7 @@ class RoleAndCompanyManagementTest extends TestCase
     protected Role $superAdminRole;
     protected Role $adminRole;
     protected Role $managerRole;
+    protected \App\Models\Project $project;
 
     protected function setUp(): void
     {
@@ -33,6 +34,15 @@ class RoleAndCompanyManagementTest extends TestCase
             'contact_primary' => '+91-9382445935',
             'email' => 's4subhasish@gmail.com',
             'address' => 'Silchar Road, Karimganj, Assam',
+        ]);
+
+        $this->project = \App\Models\Project::create([
+            'company_id' => $this->company->id,
+            'project_code' => 'SSI/PRJ-1001',
+            'name' => 'Green Valley Residency',
+            'nick_name' => 'Green Valley',
+            'full_address' => 'Silchar, Assam',
+            'is_active' => true,
         ]);
 
         // Auto-number sequence for users starting at 1003
@@ -189,16 +199,17 @@ class RoleAndCompanyManagementTest extends TestCase
     {
         $this->actingAs($this->superAdmin);
 
-        // 1. Can create multiple Admins
+        // 1. Can create multiple Admins with assigned project
         $responseAdmin = $this->post(route('admin.users.store'), [
-            'company_id' => $this->company->id,
-            'role_id' => $this->adminRole->id,
-            'name' => 'Second Admin Officer',
-            'designation' => 'Operations Manager',
-            'mobile' => '+91-9988776655',
-            'email' => 'admin2@test.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
+            'company_id'           => $this->company->id,
+            'role_id'              => $this->adminRole->id,
+            'name'                 => 'Second Admin Officer',
+            'designation'          => 'Operations Manager',
+            'mobile'               => '+91-9988776655',
+            'email'                => 'admin2@test.com',
+            'password'             => 'password123',
+            'password_confirmation'=> 'password123',
+            'assigned_project_ids' => [$this->project->id],
         ]);
 
         $responseAdmin->assertRedirect(route('admin.users.index'));
@@ -209,18 +220,100 @@ class RoleAndCompanyManagementTest extends TestCase
 
         // 2. Block creating second Super Admin
         $responseSuper = $this->post(route('admin.users.store'), [
-            'company_id' => $this->company->id,
-            'role_id' => $this->superAdminRole->id,
-            'name' => 'Fake Super Admin',
-            'designation' => 'Director',
-            'mobile' => '+91-9988776644',
-            'email' => 'fake_super@test.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
+            'company_id'           => $this->company->id,
+            'role_id'              => $this->superAdminRole->id,
+            'name'                 => 'Fake Super Admin',
+            'designation'          => 'Director',
+            'mobile'               => '+91-9988776644',
+            'email'                => 'fake_super@test.com',
+            'password'             => 'password123',
+            'password_confirmation'=> 'password123',
+            'assigned_project_ids' => [$this->project->id],
         ]);
 
         $responseSuper->assertSessionHasErrors('role_id');
         $this->assertDatabaseMissing('users', ['email' => 'fake_super@test.com']);
+    }
+
+    public function test_user_cannot_be_created_without_assigning_a_project(): void
+    {
+        $this->actingAs($this->superAdmin);
+
+        // Try creating user with empty project assignments
+        $response = $this->post(route('admin.users.store'), [
+            'company_id'           => $this->company->id,
+            'role_id'              => $this->adminRole->id,
+            'name'                 => 'No Project User',
+            'designation'          => 'Accountant',
+            'mobile'               => '+91-9876543210',
+            'email'                => 'noproject@test.com',
+            'password'             => 'password123',
+            'password_confirmation'=> 'password123',
+            'assigned_project_ids' => [],
+        ]);
+
+        $response->assertSessionHasErrors('assigned_project_ids');
+        $this->assertDatabaseMissing('users', ['email' => 'noproject@test.com']);
+    }
+
+    public function test_user_cannot_be_created_with_project_from_another_company(): void
+    {
+        $this->actingAs($this->superAdmin);
+
+        $otherCompany = Company::create([
+            'company_code'    => 'OTH',
+            'name'            => 'Other Company Ltd',
+            'contact_primary' => '+91-9000000000',
+            'email'           => 'other@test.com',
+            'address'         => 'Other City',
+        ]);
+
+        $otherProject = \App\Models\Project::create([
+            'company_id'   => $otherCompany->id,
+            'project_code' => 'OTH/PRJ-1001',
+            'name'         => 'Other Project',
+            'nick_name'    => 'Other',
+            'full_address' => 'Guwahati, Assam',
+            'is_active'    => true,
+        ]);
+
+        // Attempt to create a user for $this->company but assign $otherProject
+        $response = $this->post(route('admin.users.store'), [
+            'company_id'           => $this->company->id,
+            'role_id'              => $this->adminRole->id,
+            'name'                 => 'Cross Company User',
+            'designation'          => 'Auditor',
+            'mobile'               => '+91-9876543210',
+            'email'                => 'cross@test.com',
+            'password'             => 'password123',
+            'password_confirmation'=> 'password123',
+            'assigned_project_ids' => [$otherProject->id],
+        ]);
+
+        $response->assertSessionHasErrors('assigned_project_ids');
+        $this->assertDatabaseMissing('users', ['email' => 'cross@test.com']);
+    }
+
+    public function test_user_created_successfully_when_assigned_to_project(): void
+    {
+        $this->actingAs($this->superAdmin);
+
+        $response = $this->post(route('admin.users.store'), [
+            'company_id'           => $this->company->id,
+            'role_id'              => $this->adminRole->id,
+            'name'                 => 'Valid Project User',
+            'designation'          => 'Site Incharge',
+            'mobile'               => '+91-9876543211',
+            'email'                => 'validuser@test.com',
+            'password'             => 'password123',
+            'password_confirmation'=> 'password123',
+            'assigned_project_ids' => [$this->project->id],
+        ]);
+
+        $response->assertRedirect(route('admin.users.index'));
+        $createdUser = User::where('email', 'validuser@test.com')->first();
+        $this->assertNotNull($createdUser);
+        $this->assertContains($this->project->id, $createdUser->assigned_project_ids);
     }
 
     public function test_cannot_delete_the_primary_super_admin(): void
@@ -272,17 +365,27 @@ class RoleAndCompanyManagementTest extends TestCase
             'address' => 'Silchar',
         ]);
 
+        $project2 = \App\Models\Project::create([
+            'company_id'   => $company2->id,
+            'project_code' => 'COMP2/PRJ-1001',
+            'name'         => 'COMP2 Luxury Tower',
+            'nick_name'    => 'COMP2 Tower',
+            'full_address' => 'Silchar, Assam',
+            'is_active'    => true,
+        ]);
+
         // AutoNumberSequence for company2 is uninitialized or starts at 1001
         // Submitting user create for company2 should generate COMP2/USR-1001
         $response = $this->post(route('admin.users.store'), [
-            'company_id' => $company2->id,
-            'role_id' => $this->adminRole->id,
-            'name' => 'Sayan Kr',
-            'designation' => 'Site Engineer',
-            'mobile' => '+91-9395340221',
-            'email' => 'sayankr@gmail.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
+            'company_id'           => $company2->id,
+            'role_id'              => $this->adminRole->id,
+            'name'                 => 'Sayan Kr',
+            'designation'          => 'Site Engineer',
+            'mobile'               => '+91-9395340221',
+            'email'                => 'sayankr@gmail.com',
+            'password'             => 'password123',
+            'password_confirmation'=> 'password123',
+            'assigned_project_ids' => [$project2->id],
         ]);
 
         $response->assertRedirect(route('admin.users.index'));

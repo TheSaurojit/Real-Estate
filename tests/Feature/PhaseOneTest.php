@@ -173,6 +173,11 @@ class PhaseOneTest extends TestCase
             'account_nick_name' => $uniqueNick,
             'account_number' => '987654321098',
         ]);
+
+        $indexResponse = $this->get(route('admin.bank-accounts.index'));
+        $indexResponse->assertStatus(200);
+        $indexResponse->assertSee($this->company->name);
+        $indexResponse->assertSee($uniqueNick);
     }
 
     public function test_project_switcher_changes_active_session(): void

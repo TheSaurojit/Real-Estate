@@ -24,10 +24,10 @@ class AutoNumberController extends Controller
             ->get();
 
         // If any defaults are missing, load them
-        $defaultTypes = ['bank_account', 'user', 'project', 'booking', 'receipt', 'payment'];
+        $defaultTypes = ['bank_account', 'user', 'project', 'booking', 'receipt', 'payment', 'expense', 'supplier', 'stock_transfer'];
         foreach ($defaultTypes as $type) {
             if (!$sequences->contains('entity_type', $type)) {
-                $defaults = AutoNumberService::getDefaultSettings($type);
+                $defaults = AutoNumberService::getDefaultSettings($type, $company);
                 $this->autoNumberService->configureSequence(
                     $type,
                     $defaults['prefix'],
