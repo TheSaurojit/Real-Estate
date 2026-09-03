@@ -64,52 +64,58 @@
 
         <!-- Top Action Buttons -->
         <div class="flex items-center space-x-2" x-data="{ printMenuOpen: false }">
-            <a href="{{ route('project.transactions.create', ['project' => $project->id, 'booking_id' => $booking->id]) }}" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center space-x-1.5">
-                <i class="fa-solid fa-money-bill-transfer"></i>
-                <span>Collect Payment</span>
-            </a>
+            @if(auth()->user()->hasPermission('create_receipts'))
+                <a href="{{ route('project.transactions.create', ['project' => $project->id, 'booking_id' => $booking->id]) }}" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-money-bill-transfer"></i>
+                    <span>Collect Payment</span>
+                </a>
+            @endif
 
             <!-- Print Documents Dropdown -->
-            <div class="relative">
-                <button @click="printMenuOpen = !printMenuOpen" type="button" class="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center space-x-1.5">
-                    <i class="fa-solid fa-print"></i>
-                    <span>Print Documents</span>
-                    <i class="fa-solid fa-chevron-down text-[10px] ml-0.5"></i>
-                </button>
-                <div x-show="printMenuOpen" @click.away="printMenuOpen = false" class="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 text-xs" style="display: none;">
-                    <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
-                        12 Print-Ready Templates
+            @if(auth()->user()->hasPermission('print_documents'))
+                <div class="relative">
+                    <button @click="printMenuOpen = !printMenuOpen" type="button" class="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-print"></i>
+                        <span>Print Documents</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] ml-0.5"></i>
+                    </button>
+                    <div x-show="printMenuOpen" @click.away="printMenuOpen = false" class="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 text-xs" style="display: none;">
+                        <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                            12 Print-Ready Templates
+                        </div>
+                        @foreach(\App\Http\Controllers\Project\DocumentController::DOCUMENT_TYPES as $typeKey => $typeInfo)
+                            <a href="{{ route('project.documents.show', [$project->id, $booking->id, $typeKey]) }}" target="_blank"
+                               class="flex items-center space-x-2 px-3 py-2 text-slate-700 hover:bg-sky-50 hover:text-sky-700 transition">
+                                <i class="fa-solid {{ $typeInfo['icon'] }} w-4 text-slate-400"></i>
+                                <span class="font-medium truncate">{{ $typeInfo['title'] }}</span>
+                            </a>
+                        @endforeach
                     </div>
-                    @foreach(\App\Http\Controllers\Project\DocumentController::DOCUMENT_TYPES as $typeKey => $typeInfo)
-                        <a href="{{ route('project.documents.show', [$project->id, $booking->id, $typeKey]) }}" target="_blank"
-                           class="flex items-center space-x-2 px-3 py-2 text-slate-700 hover:bg-sky-50 hover:text-sky-700 transition">
-                            <i class="fa-solid {{ $typeInfo['icon'] }} w-4 text-slate-400"></i>
-                            <span class="font-medium truncate">{{ $typeInfo['title'] }}</span>
-                        </a>
-                    @endforeach
                 </div>
-            </div>
+            @endif
 
-            @if($booking->total_taxable_received > $booking->gross_taxable_value)
+            @if(auth()->user()->hasPermission('manage_adjustments') && $booking->total_taxable_received > $booking->gross_taxable_value)
                 <a href="{{ route('project.bookings.adjustment.create', [$project->id, $booking->id]) }}" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center space-x-1.5 animate-pulse">
                     <i class="fa-solid fa-scale-balanced"></i>
                     <span>Rebalance Overpayment</span>
                 </a>
             @endif
 
-            @if($booking->status === 'cancelled')
+            @if(auth()->user()->hasPermission('create_refunds') && $booking->status === 'cancelled')
                 <a href="{{ route('project.bookings.cancellation-refund.show', [$project->id, $booking->id]) }}" class="px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center space-x-1.5">
                     <i class="fa-solid fa-hand-holding-dollar"></i>
                     <span>Refund Settlement</span>
                 </a>
             @endif
 
-            <a href="{{ route('project.bookings.edit', [$project->id, $booking->id]) }}" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5">
-                <i class="fa-solid fa-pen-to-square"></i>
-                <span>Edit Specs</span>
-            </a>
+            @if(auth()->user()->hasPermission('edit_bookings'))
+                <a href="{{ route('project.bookings.edit', [$project->id, $booking->id]) }}" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    <span>Edit Specs</span>
+                </a>
+            @endif
 
-            @if($booking->status !== 'cancelled')
+            @if(auth()->user()->hasPermission('cancel_bookings') && $booking->status !== 'cancelled')
                 <button @click="showCancelModal = true" class="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-semibold transition border border-rose-200 flex items-center space-x-1.5">
                     <i class="fa-solid fa-ban"></i>
                     <span>Cancel Booking</span>

@@ -14,10 +14,12 @@
             <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Bank Accounts & Escrow Master</h1>
             <p class="text-xs text-slate-500 mt-0.5">Manage builder company bank accounts, RERA designated escrow accounts, and cash accounts.</p>
         </div>
-        <a href="{{ route('admin.bank-accounts.create') }}" class="inline-flex items-center space-x-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm shadow-emerald-600/20 transition">
-            <i class="fa-solid fa-plus"></i>
-            <span>Add Bank Account</span>
-        </a>
+        @if(auth()->user()->hasPermission('create_bank_accounts'))
+            <a href="{{ route('admin.bank-accounts.create') }}" class="inline-flex items-center space-x-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm shadow-emerald-600/20 transition">
+                <i class="fa-solid fa-plus"></i>
+                <span>Add Bank Account</span>
+            </a>
+        @endif
     </div>
 
     <!-- Accounts Table Card -->

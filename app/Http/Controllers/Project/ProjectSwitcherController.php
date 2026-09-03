@@ -23,6 +23,11 @@ class ProjectSwitcherController extends Controller
 
         if (is_numeric($target)) {
             $project = Project::findOrFail((int)$target);
+
+            if (!auth()->user()->hasAccessToProject($project->id)) {
+                abort(403, 'Unauthorized. You do not have permission to access this project.');
+            }
+
             session(['active_project_id' => $project->id]);
             return redirect()->route('project.dashboard', $project->id);
         }

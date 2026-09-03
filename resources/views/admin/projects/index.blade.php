@@ -14,10 +14,12 @@
             <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Real Estate Projects Master</h1>
             <p class="text-xs text-slate-500 mt-0.5">Manage residential & commercial property projects under developer companies.</p>
         </div>
-        <a href="{{ route('admin.projects.create') }}" class="inline-flex items-center space-x-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold shadow-sm shadow-amber-600/20 transition">
-            <i class="fa-solid fa-plus"></i>
-            <span>Create New Project</span>
-        </a>
+        @if(auth()->user()->hasPermission('create_projects'))
+            <a href="{{ route('admin.projects.create') }}" class="inline-flex items-center space-x-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold shadow-sm shadow-amber-600/20 transition">
+                <i class="fa-solid fa-plus"></i>
+                <span>Create New Project</span>
+            </a>
+        @endif
     </div>
 
     <!-- Projects Table Card -->

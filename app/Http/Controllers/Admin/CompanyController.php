@@ -31,9 +31,8 @@ class CompanyController extends Controller
      */
     public function create(): View
     {
-        // Only super admin can create companies
-        if (!auth()->user()->isSuperAdmin()) {
-            abort(403, 'Unauthorized. Only Super Admin can create new companies.');
+        if (!auth()->user()->hasPermission('manage_companies')) {
+            abort(403, 'Unauthorized. Your role does not have permission to manage companies.');
         }
 
         return view('admin.companies.create');
@@ -44,8 +43,8 @@ class CompanyController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        if (!auth()->user()->isSuperAdmin()) {
-            abort(403, 'Unauthorized. Only Super Admin can create new companies.');
+        if (!auth()->user()->hasPermission('manage_companies')) {
+            abort(403, 'Unauthorized. Your role does not have permission to manage companies.');
         }
 
         $validated = $request->validate([
@@ -97,8 +96,8 @@ class CompanyController extends Controller
      */
     public function edit(Company $company): View
     {
-        if (!auth()->user()->isSuperAdmin()) {
-            abort(403, 'Unauthorized. Only Super Admin can modify companies.');
+        if (!auth()->user()->hasPermission('manage_companies')) {
+            abort(403, 'Unauthorized. Your role does not have permission to modify companies.');
         }
 
         return view('admin.companies.edit', compact('company'));
@@ -109,8 +108,8 @@ class CompanyController extends Controller
      */
     public function update(Request $request, Company $company): RedirectResponse
     {
-        if (!auth()->user()->isSuperAdmin()) {
-            abort(403, 'Unauthorized. Only Super Admin can modify companies.');
+        if (!auth()->user()->hasPermission('manage_companies')) {
+            abort(403, 'Unauthorized. Your role does not have permission to modify companies.');
         }
 
         $validated = $request->validate([
@@ -144,8 +143,8 @@ class CompanyController extends Controller
      */
     public function destroy(Company $company): RedirectResponse
     {
-        if (!auth()->user()->isSuperAdmin()) {
-            abort(403, 'Unauthorized. Only Super Admin can delete companies.');
+        if (!auth()->user()->hasPermission('manage_companies')) {
+            abort(403, 'Unauthorized. Your role does not have permission to delete companies.');
         }
 
         if ($company->projects()->count() > 0 || $company->bankAccounts()->count() > 0) {

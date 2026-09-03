@@ -40,8 +40,14 @@ class SetProjectContext
             }
         }
 
+        // Filter accessible projects for navigation dropdown
+        $user = Auth::user();
+        $accessibleProjects = ($user && !$user->isSuperAdmin())
+            ? $allProjects->filter(fn($p) => $user->hasAccessToProject($p->id))->values()
+            : $allProjects;
+
         // Share globally with all Blade views
-        View::share('allProjects', $allProjects);
+        View::share('allProjects', $accessibleProjects);
         View::share('currentProject', $currentProject);
         View::share('currentCompany', $company);
 

@@ -15,14 +15,16 @@
             <p class="text-xs text-slate-500 mt-0.5">Track raw materials (Cement, Steel, Bricks), labor contractor payouts, machinery, and site overheads.</p>
         </div>
         <div class="flex items-center space-x-2">
-            <a href="{{ route('project.stock-transfers.index', $project->id) }}" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition border border-slate-200 flex items-center space-x-1.5">
-                <i class="fa-solid fa-truck-ramp-box"></i>
-                <span>Stock Transfers</span>
-            </a>
-            <a href="{{ route('project.expenses.create', $project->id) }}" class="inline-flex items-center space-x-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-semibold shadow-sm shadow-cyan-600/20 transition">
-                <i class="fa-solid fa-plus"></i>
-                <span>Record Site Expense</span>
-            </a>
+            @if(auth()->user()->hasPermission('manage_expenses'))
+                <a href="{{ route('project.stock-transfers.index', $project->id) }}" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition border border-slate-200 flex items-center space-x-1.5">
+                    <i class="fa-solid fa-truck-ramp-box"></i>
+                    <span>Stock Transfers</span>
+                </a>
+                <a href="{{ route('project.expenses.create', $project->id) }}" class="inline-flex items-center space-x-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-semibold shadow-sm shadow-cyan-600/20 transition">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Record Site Expense</span>
+                </a>
+            @endif
         </div>
     </div>
 

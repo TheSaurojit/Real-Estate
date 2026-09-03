@@ -70,9 +70,12 @@
                                 <i class="fa-solid {{ isset($currentProject) ? 'fa-city' : 'fa-gauge-high' }}"></i>
                             </div>
                             <select name="target" onchange="this.form.submit()" class="pl-9 pr-8 py-1.5 text-xs font-semibold rounded-lg bg-slate-800/90 text-sky-100 border border-sky-700/60 hover:border-sky-500 focus:ring-2 focus:ring-sky-400 focus:outline-none transition cursor-pointer shadow-inner">
+                                @if (auth()->user()->role === "super_admin" || auth()->user()->role === "admin" )
+                                    
                                 <option value="admin" {{ !isset($currentProject) ? 'selected' : '' }}>
                                     ⚙️ Admin Panel (Global Settings)
                                 </option>
+                                @endif
                                 <optgroup label="── Active Projects ──">
                                     @foreach($allProjects ?? [] as $proj)
                                         <option value="{{ $proj->id }}" {{ (isset($currentProject) && $currentProject->id === $proj->id) ? 'selected' : '' }}>
@@ -141,71 +144,115 @@
                             <div class="px-3 pt-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                                 Project Modules
                             </div>
-                            <a href="{{ route('project.bookings.index', $currentProject->id) }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('project.bookings.*') ? 'bg-sky-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                                <i class="fa-solid fa-file-signature w-6 text-sky-400"></i>
-                                <span>Bookings Master</span>
-                            </a>
-                            <a href="{{ route('project.transactions.index', $currentProject->id) }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('project.transactions.*') ? 'bg-sky-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                                <i class="fa-solid fa-money-bill-transfer w-6 text-emerald-400"></i>
-                                <span>Transactions Ledger</span>
-                            </a>
-                            <a href="{{ route('project.expenses.index', $currentProject->id) }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('project.expenses.*') ? 'bg-sky-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                                <i class="fa-solid fa-cart-flatbed w-6 text-cyan-400"></i>
-                                <span>Site Expenses</span>
-                            </a>
-                            <a href="{{ route('project.stock-transfers.index', $currentProject->id) }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('project.stock-transfers.*') ? 'bg-sky-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                                <i class="fa-solid fa-truck-ramp-box w-6 text-teal-400"></i>
-                                <span>Stock Transfers</span>
-                            </a>
-                            <a href="{{ route('project.reports.index', $currentProject->id) }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('project.reports.*') ? 'bg-sky-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                                <i class="fa-solid fa-chart-pie w-6 text-violet-400"></i>
-                                <span>Executive Reports</span>
-                            </a>
-                            <a href="{{ route('project.documents.index', $currentProject->id) }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('project.documents.*') ? 'bg-sky-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                                <i class="fa-solid fa-print w-6 text-rose-400"></i>
-                                <span>Print Documents</span>
-                            </a>
+                            @if(auth()->user()->hasPermission('view_bookings'))
+                                <a href="{{ route('project.bookings.index', $currentProject->id) }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('project.bookings.*') ? 'bg-sky-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                                    <i class="fa-solid fa-file-signature w-6 text-sky-400"></i>
+                                    <span>Bookings Master</span>
+                                </a>
+                            @endif
+
+                            @if(auth()->user()->hasPermission('view_transactions'))
+                                <a href="{{ route('project.transactions.index', $currentProject->id) }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('project.transactions.*') ? 'bg-sky-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                                    <i class="fa-solid fa-money-bill-transfer w-6 text-emerald-400"></i>
+                                    <span>Transactions Ledger</span>
+                                </a>
+                            @endif
+
+                            @if(auth()->user()->hasPermission('manage_expenses'))
+                                <a href="{{ route('project.expenses.index', $currentProject->id) }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('project.expenses.*') ? 'bg-sky-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                                    <i class="fa-solid fa-cart-flatbed w-6 text-cyan-400"></i>
+                                    <span>Site Expenses</span>
+                                </a>
+                                <a href="{{ route('project.stock-transfers.index', $currentProject->id) }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('project.stock-transfers.*') ? 'bg-sky-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                                    <i class="fa-solid fa-truck-ramp-box w-6 text-teal-400"></i>
+                                    <span>Stock Transfers</span>
+                                </a>
+                            @endif
+
+                            @if(auth()->user()->hasPermission('view_booking_reports') || auth()->user()->hasPermission('view_financial_reports'))
+                                <a href="{{ route('project.reports.index', $currentProject->id) }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('project.reports.*') ? 'bg-sky-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                                    <i class="fa-solid fa-chart-pie w-6 text-violet-400"></i>
+                                    <span>Executive Reports</span>
+                                </a>
+                            @endif
+
+                            @if(auth()->user()->hasPermission('print_documents'))
+                                <a href="{{ route('project.documents.index', $currentProject->id) }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('project.documents.*') ? 'bg-sky-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                                    <i class="fa-solid fa-print w-6 text-rose-400"></i>
+                                    <span>Print Documents</span>
+                                </a>
+                            @endif
                         </nav>
                     </div>
                 @endif
 
                 <!-- Admin Settings Menu -->
-                <div>
-                    <div class="px-3 text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
-                        <span>Admin & Master Settings</span>
-                        <i class="fa-solid fa-shield-halved text-slate-500"></i>
+                @php
+                    $hasAdminMenuAccess = auth()->user()->isSuperAdmin() ||
+                        auth()->user()->hasPermission('manage_companies') ||
+                        auth()->user()->hasPermission('manage_roles') ||
+                        auth()->user()->hasPermission('manage_autonumber') ||
+                        auth()->user()->hasPermission('view_projects') ||
+                        auth()->user()->hasPermission('view_bank_accounts') ||
+                        auth()->user()->hasPermission('view_users');
+                @endphp
+
+                @if($hasAdminMenuAccess)
+                    <div>
+                        <div class="px-3 text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
+                            <span>Admin & Master Settings</span>
+                            <i class="fa-solid fa-shield-halved text-slate-500"></i>
+                        </div>
+                        <nav class="space-y-1">
+                            <a href="{{ route('admin.dashboard') }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('admin.dashboard') ? 'bg-sky-600 text-white shadow-md' : 'hover:bg-slate-800 hover:text-white' }}">
+                                <i class="fa-solid fa-gauge-high w-6 text-sky-400"></i>
+                                <span>Admin Overview</span>
+                            </a>
+
+                            @if(auth()->user()->hasPermission('manage_companies'))
+                                <a href="{{ route('admin.companies.index') }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('admin.companies.*') ? 'bg-sky-600 text-white shadow-md' : 'hover:bg-slate-800 hover:text-white' }}">
+                                    <i class="fa-solid fa-building w-6 text-rose-400"></i>
+                                    <span>Companies Master</span>
+                                </a>
+                            @endif
+
+                            @if(auth()->user()->hasPermission('view_projects'))
+                                <a href="{{ route('admin.projects.index') }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('admin.projects.*') ? 'bg-sky-600 text-white shadow-md' : 'hover:bg-slate-800 hover:text-white' }}">
+                                    <i class="fa-solid fa-city w-6 text-amber-400"></i>
+                                    <span>Projects Master</span>
+                                </a>
+                            @endif
+
+                            @if(auth()->user()->hasPermission('view_bank_accounts'))
+                                <a href="{{ route('admin.bank-accounts.index') }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('admin.bank-accounts.*') ? 'bg-sky-600 text-white shadow-md' : 'hover:bg-slate-800 hover:text-white' }}">
+                                    <i class="fa-solid fa-building-columns w-6 text-emerald-400"></i>
+                                    <span>Bank Accounts</span>
+                                </a>
+                            @endif
+
+                            @if(auth()->user()->hasPermission('view_users'))
+                                <a href="{{ route('admin.users.index') }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('admin.users.*') ? 'bg-sky-600 text-white shadow-md' : 'hover:bg-slate-800 hover:text-white' }}">
+                                    <i class="fa-solid fa-users w-6 text-violet-400"></i>
+                                    <span>User Management</span>
+                                </a>
+                            @endif
+
+                            @if(auth()->user()->hasPermission('manage_roles'))
+                                <a href="{{ route('admin.roles.index') }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('admin.roles.*') ? 'bg-sky-600 text-white shadow-md' : 'hover:bg-slate-800 hover:text-white' }}">
+                                    <i class="fa-solid fa-shield-halved w-6 text-indigo-400"></i>
+                                    <span>Roles & Permissions</span>
+                                </a>
+                            @endif
+
+                            @if(auth()->user()->hasPermission('manage_autonumber'))
+                                <a href="{{ route('admin.autonumber.index') }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('admin.autonumber.*') ? 'bg-sky-600 text-white shadow-md' : 'hover:bg-slate-800 hover:text-white' }}">
+                                    <i class="fa-solid fa-hashtag w-6 text-cyan-400"></i>
+                                    <span>Auto-Numbering</span>
+                                </a>
+                            @endif
+                        </nav>
                     </div>
-                    <nav class="space-y-1">
-                        <a href="{{ route('admin.dashboard') }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('admin.dashboard') ? 'bg-sky-600 text-white shadow-md' : 'hover:bg-slate-800 hover:text-white' }}">
-                            <i class="fa-solid fa-gauge-high w-6 text-sky-400"></i>
-                            <span>Admin Overview</span>
-                        </a>
-                        <a href="{{ route('admin.companies.index') }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('admin.companies.*') ? 'bg-sky-600 text-white shadow-md' : 'hover:bg-slate-800 hover:text-white' }}">
-                            <i class="fa-solid fa-building w-6 text-rose-400"></i>
-                            <span>Companies Master</span>
-                        </a>
-                        <a href="{{ route('admin.projects.index') }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('admin.projects.*') ? 'bg-sky-600 text-white shadow-md' : 'hover:bg-slate-800 hover:text-white' }}">
-                            <i class="fa-solid fa-city w-6 text-amber-400"></i>
-                            <span>Projects Master</span>
-                        </a>
-                        <a href="{{ route('admin.bank-accounts.index') }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('admin.bank-accounts.*') ? 'bg-sky-600 text-white shadow-md' : 'hover:bg-slate-800 hover:text-white' }}">
-                            <i class="fa-solid fa-building-columns w-6 text-emerald-400"></i>
-                            <span>Bank Accounts</span>
-                        </a>
-                        <a href="{{ route('admin.users.index') }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('admin.users.*') ? 'bg-sky-600 text-white shadow-md' : 'hover:bg-slate-800 hover:text-white' }}">
-                            <i class="fa-solid fa-users w-6 text-violet-400"></i>
-                            <span>User Management</span>
-                        </a>
-                        <a href="{{ route('admin.roles.index') }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('admin.roles.*') ? 'bg-sky-600 text-white shadow-md' : 'hover:bg-slate-800 hover:text-white' }}">
-                            <i class="fa-solid fa-shield-halved w-6 text-indigo-400"></i>
-                            <span>Roles & Permissions</span>
-                        </a>
-                        <a href="{{ route('admin.autonumber.index') }}" class="flex items-center px-3 py-2 rounded-lg font-medium transition {{ request()->routeIs('admin.autonumber.*') ? 'bg-sky-600 text-white shadow-md' : 'hover:bg-slate-800 hover:text-white' }}">
-                            <i class="fa-solid fa-hashtag w-6 text-cyan-400"></i>
-                            <span>Auto-Numbering</span>
-                        </a>
-                    </nav>
-                </div>
+                @endif
 
             </div>
 

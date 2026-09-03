@@ -29,10 +29,12 @@
             <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Dual-Ledger Financial Transactions</h1>
             <p class="text-xs text-slate-500 mt-0.5">Track Money Receipts (Taxable Banking/GST), Receipt Vouchers (Cash), Payment Refunds, and Cheque Clearances.</p>
         </div>
-        <a href="{{ route('project.transactions.create', $project->id) }}" class="inline-flex items-center space-x-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm shadow-emerald-600/20 transition">
-            <i class="fa-solid fa-money-bill-transfer"></i>
-            <span>Collect Payment / New Receipt</span>
-        </a>
+        @if(auth()->user()->hasPermission('create_receipts'))
+            <a href="{{ route('project.transactions.create', $project->id) }}" class="inline-flex items-center space-x-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm shadow-emerald-600/20 transition">
+                <i class="fa-solid fa-money-bill-transfer"></i>
+                <span>Collect Payment / New Receipt</span>
+            </a>
+        @endif
     </div>
 
     <!-- Financial Stats Summary Grid -->

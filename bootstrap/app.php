@@ -16,6 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             SetProjectContext::class,
         ]);
+
+        $middleware->alias([
+            'permission'     => \App\Http\Middleware\CheckPermission::class,
+            'project.access' => \App\Http\Middleware\EnsureUserHasProjectAccess::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

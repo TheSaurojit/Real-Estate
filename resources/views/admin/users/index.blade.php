@@ -14,10 +14,12 @@
             <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Staff & Operator Accounts</h1>
             <p class="text-xs text-slate-500 mt-0.5">Manage employee operator credentials, designation roles, and assigned project permissions.</p>
         </div>
-        <a href="{{ route('admin.users.create') }}" class="inline-flex items-center space-x-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-semibold shadow-sm shadow-violet-600/20 transition">
-            <i class="fa-solid fa-user-plus"></i>
-            <span>Add New Staff User</span>
-        </a>
+        @if(auth()->user()->hasPermission('create_users'))
+            <a href="{{ route('admin.users.create') }}" class="inline-flex items-center space-x-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-semibold shadow-sm shadow-violet-600/20 transition">
+                <i class="fa-solid fa-user-plus"></i>
+                <span>Add New Staff User</span>
+            </a>
+        @endif
     </div>
 
     <!-- Users Table Card -->
