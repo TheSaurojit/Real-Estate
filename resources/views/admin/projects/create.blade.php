@@ -65,9 +65,9 @@
                     </label>
                     <select id="company_id" name="company_id" required
                             class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:border-transparent transition cursor-pointer">
-                        <option value="" disabled {{ old('company_id') ? '' : 'selected' }}>-- Select Company --</option>
+                        <option value="" disabled {{ (old('company_id') || $companies->count() === 1) ? '' : 'selected' }}>-- Select Company --</option>
                         @foreach($companies as $comp)
-                            <option value="{{ $comp->id }}" {{ old('company_id') == $comp->id ? 'selected' : '' }}>
+                            <option value="{{ $comp->id }}" {{ (old('company_id') == $comp->id || $companies->count() === 1) ? 'selected' : '' }}>
                                 {{ $comp->name }} ({{ $comp->company_code }})
                             </option>
                         @endforeach

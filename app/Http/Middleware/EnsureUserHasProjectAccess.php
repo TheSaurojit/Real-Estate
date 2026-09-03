@@ -39,9 +39,13 @@ class EnsureUserHasProjectAccess
             $projectId = (int)session('active_project_id');
         }
 
-        // 3. Verify user has access to this project
-        if ($projectId && !$user->hasAccessToProject($projectId)) {
-            abort(403, 'Unauthorized. You do not have permission to access this project.');
+        // 3. Verify user's company ownership and project assignment
+        if ($projectId) {
+            $project = $routeProject instanceof Project ? $routeProject : Project::find($projectId);
+
+            if (!$project || $project->company_id !== $user->company_id || !$user->hasAccessToProject($projectId)) {
+                abort(403, 'Unauthorized. You do not have permission to access this project.');
+            }
         }
 
         return $next($request);

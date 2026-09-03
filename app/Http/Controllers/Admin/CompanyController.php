@@ -18,11 +18,18 @@ class CompanyController extends Controller
     }
 
     /**
-     * Display a listing of all companies (Super Admin access)
+     * Display a listing of all companies (Super Admin access all; staff access own company)
      */
     public function index(): View
     {
-        $companies = Company::withCount(['projects', 'bankAccounts', 'users'])->latest()->get();
+        $user = auth()->user();
+        $query = Company::withCount(['projects', 'bankAccounts', 'users']);
+
+        if (!$user->isSuperAdmin()) {
+            $query->where('id', $user->company_id);
+        }
+
+        $companies = $query->latest()->get();
         return view('admin.companies.index', compact('companies'));
     }
 
@@ -31,8 +38,9 @@ class CompanyController extends Controller
      */
     public function create(): View
     {
-        if (!auth()->user()->hasPermission('manage_companies')) {
-            abort(403, 'Unauthorized. Your role does not have permission to manage companies.');
+        $user = auth()->user();
+        if (!$user->isSuperAdmin()) {
+            abort(403, 'Unauthorized. Only Super Admin can create new companies.');
         }
 
         return view('admin.companies.create');
@@ -43,8 +51,9 @@ class CompanyController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        if (!auth()->user()->hasPermission('manage_companies')) {
-            abort(403, 'Unauthorized. Your role does not have permission to manage companies.');
+        $user = auth()->user();
+        if (!$user->isSuperAdmin()) {
+            abort(403, 'Unauthorized. Only Super Admin can create new companies.');
         }
 
         $validated = $request->validate([
@@ -96,8 +105,9 @@ class CompanyController extends Controller
      */
     public function edit(Company $company): View
     {
-        if (!auth()->user()->hasPermission('manage_companies')) {
-            abort(403, 'Unauthorized. Your role does not have permission to modify companies.');
+        $user = auth()->user();
+        if (!$user->isSuperAdmin() && $company->id !== $user->company_id) {
+            abort(403, 'Unauthorized. You can only view and modify your own company.');
         }
 
         return view('admin.companies.edit', compact('company'));
@@ -108,8 +118,9 @@ class CompanyController extends Controller
      */
     public function update(Request $request, Company $company): RedirectResponse
     {
-        if (!auth()->user()->hasPermission('manage_companies')) {
-            abort(403, 'Unauthorized. Your role does not have permission to modify companies.');
+        $user = auth()->user();
+        if (!$user->isSuperAdmin() && $company->id !== $user->company_id) {
+            abort(403, 'Unauthorized. You can only modify your own company.');
         }
 
         $validated = $request->validate([
@@ -139,12 +150,13 @@ class CompanyController extends Controller
     }
 
     /**
-     * Delete a company (with safeguards)
+     * Delete a company (with safeguards - Super Admin only)
      */
     public function destroy(Company $company): RedirectResponse
     {
-        if (!auth()->user()->hasPermission('manage_companies')) {
-            abort(403, 'Unauthorized. Your role does not have permission to delete companies.');
+        $user = auth()->user();
+        if (!$user->isSuperAdmin()) {
+            abort(403, 'Unauthorized. Only Super Admin can delete developer companies.');
         }
 
         if ($company->projects()->count() > 0 || $company->bankAccounts()->count() > 0) {

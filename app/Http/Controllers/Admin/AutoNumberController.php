@@ -18,9 +18,12 @@ class AutoNumberController extends Controller
 
     public function index(): View
     {
-        $company = Company::first();
+        $user = auth()->user();
+        $company = $user->isSuperAdmin()
+            ? (Company::find(request('company_id')) ?? Company::first())
+            : $user->company;
+
         $sequences = AutoNumberSequence::where('company_id', $company?->id)
-            ->orWhereNull('company_id')
             ->get();
 
         // If any defaults are missing, load them
@@ -40,7 +43,6 @@ class AutoNumberController extends Controller
         }
 
         $sequences = AutoNumberSequence::where('company_id', $company?->id)
-            ->orWhereNull('company_id')
             ->orderBy('id')
             ->get();
 
@@ -49,6 +51,8 @@ class AutoNumberController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
+        $user = auth()->user();
+
         $validated = $request->validate([
             'sequences' => ['required', 'array'],
             'sequences.*.id' => ['required', 'exists:auto_number_sequences,id'],
@@ -59,6 +63,11 @@ class AutoNumberController extends Controller
 
         foreach ($validated['sequences'] as $seqData) {
             $seq = AutoNumberSequence::findOrFail($seqData['id']);
+
+            if (!$user->isSuperAdmin() && $seq->company_id !== $user->company_id) {
+                abort(403, 'Unauthorized. You cannot modify auto-numbering sequences belonging to another company.');
+            }
+
             $seq->update([
                 'prefix' => $seqData['prefix'],
                 'next_number' => $seqData['next_number'],

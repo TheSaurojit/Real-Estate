@@ -31,16 +31,27 @@ class DashboardController extends Controller
             abort(403, 'Unauthorized. Your role does not have permission to access the Admin Panel.');
         }
 
-        $company = Company::first();
-        $projectsCount = Project::count();
-        $activeProjectsCount = Project::where('is_active', true)->count();
-        $bankAccountsCount = BankAccount::count();
-        $usersCount = User::where('role', '!=', 'super_admin')->whereDoesntHave('roleRelation', function ($q) {
-            $q->where('slug', 'super_admin');
-        })->count();
+        $company = $user->isSuperAdmin() ? Company::first() : $user->company;
 
-        $recentProjects = Project::latest()->take(5)->get();
-        $bankAccounts = BankAccount::with('project')->latest()->take(5)->get();
+        $projectsQuery = Project::query();
+        $bankAccountsQuery = BankAccount::query();
+        $usersQuery = User::where('role', '!=', 'super_admin')->whereDoesntHave('roleRelation', function ($q) {
+            $q->where('slug', 'super_admin');
+        });
+
+        if (!$user->isSuperAdmin()) {
+            $projectsQuery->where('company_id', $user->company_id);
+            $bankAccountsQuery->where('company_id', $user->company_id);
+            $usersQuery->where('company_id', $user->company_id);
+        }
+
+        $projectsCount = $projectsQuery->count();
+        $activeProjectsCount = (clone $projectsQuery)->where('is_active', true)->count();
+        $bankAccountsCount = $bankAccountsQuery->count();
+        $usersCount = $usersQuery->count();
+
+        $recentProjects = (clone $projectsQuery)->latest()->take(5)->get();
+        $bankAccounts = (clone $bankAccountsQuery)->with('project')->latest()->take(5)->get();
 
         return view('admin.dashboard', compact(
             'company',

@@ -22,23 +22,32 @@ class UserController extends Controller
 
     public function index(): View
     {
+        $authUser = auth()->user();
         // Display staff users and admins, excluding the primary Super Admin system account
-        $users = User::with(['company', 'roleRelation'])
+        $query = User::with(['company', 'roleRelation'])
             ->where('role', '!=', 'super_admin')
             ->whereDoesntHave('roleRelation', function ($q) {
                 $q->where('slug', 'super_admin');
-            })
-            ->latest()
-            ->get();
+            });
+
+        if (!$authUser->isSuperAdmin()) {
+            $query->where('company_id', $authUser->company_id);
+        }
+
+        $users = $query->latest()->get();
 
         return view('admin.users.index', compact('users'));
     }
 
     public function create(): View
     {
-        $company = Company::first();
-        $companies = Company::all();
-        $projects = Project::where('is_active', true)->get();
+        $authUser = auth()->user();
+        $company = $authUser->isSuperAdmin() ? Company::first() : $authUser->company;
+        $companies = $authUser->isSuperAdmin() ? Company::all() : Company::where('id', $authUser->company_id)->get();
+        $projects = $authUser->isSuperAdmin()
+            ? Project::where('is_active', true)->get()
+            : Project::where('company_id', $authUser->company_id)->where('is_active', true)->get();
+
         // Only 1 Super Admin allowed in system; all other staff are Admin or custom roles
         $roles = Role::where('slug', '!=', 'super_admin')->get();
 
@@ -47,6 +56,8 @@ class UserController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $authUser = auth()->user();
+
         $validated = $request->validate([
             'company_id'             => ['required', 'exists:companies,id'],
             'role_id'                => ['required', 'exists:roles,id'],
@@ -62,6 +73,10 @@ class UserController extends Controller
             'assigned_project_ids.min'      => 'Please assign the user to at least one project.',
             'assigned_project_ids.*.exists' => 'The selected project is invalid.',
         ]);
+
+        if (!$authUser->isSuperAdmin() && (int)$validated['company_id'] !== (int)$authUser->company_id) {
+            abort(403, 'Unauthorized. You can only create staff users for your own company.');
+        }
 
         $role = Role::findOrFail($validated['role_id']);
 
@@ -109,8 +124,15 @@ class UserController extends Controller
 
     public function edit(User $user): View
     {
-        $companies = Company::all();
-        $projects = Project::where('is_active', true)->get();
+        $authUser = auth()->user();
+        if (!$authUser->isSuperAdmin() && $user->company_id !== $authUser->company_id) {
+            abort(403, 'Unauthorized. You cannot view or edit staff belonging to another company.');
+        }
+
+        $companies = $authUser->isSuperAdmin() ? Company::all() : Company::where('id', $authUser->company_id)->get();
+        $projects = $authUser->isSuperAdmin()
+            ? Project::where('is_active', true)->get()
+            : Project::where('company_id', $authUser->company_id)->where('is_active', true)->get();
         
         // If editing the Super Admin, show their role; otherwise only non-superadmin roles
         $roles = $user->isSuperAdmin()
@@ -122,6 +144,11 @@ class UserController extends Controller
 
     public function update(Request $request, User $user): RedirectResponse
     {
+        $authUser = auth()->user();
+        if (!$authUser->isSuperAdmin() && $user->company_id !== $authUser->company_id) {
+            abort(403, 'Unauthorized. You cannot modify staff belonging to another company.');
+        }
+
         $validated = $request->validate([
             'company_id'             => ['required', 'exists:companies,id'],
             'role_id'                => ['required', 'exists:roles,id'],
@@ -138,6 +165,10 @@ class UserController extends Controller
             'assigned_project_ids.min'      => 'Please assign the user to at least one project.',
             'assigned_project_ids.*.exists' => 'The selected project is invalid.',
         ]);
+
+        if (!$authUser->isSuperAdmin() && (int)$validated['company_id'] !== (int)$authUser->company_id) {
+            abort(403, 'Unauthorized. You cannot transfer a staff user to another company.');
+        }
 
         $role = Role::findOrFail($validated['role_id']);
 
@@ -188,6 +219,11 @@ class UserController extends Controller
 
     public function destroy(User $user): RedirectResponse
     {
+        $authUser = auth()->user();
+        if (!$authUser->isSuperAdmin() && $user->company_id !== $authUser->company_id) {
+            abort(403, 'Unauthorized. You cannot delete staff belonging to another company.');
+        }
+
         if ($user->isSuperAdmin()) {
             return back()->withErrors(['error' => 'The primary Super Admin account cannot be deleted.']);
         }

@@ -19,15 +19,26 @@ class BankAccountController extends Controller
 
     public function index(): View
     {
-        $bankAccounts = BankAccount::with(['company', 'project'])->latest()->get();
+        $user = auth()->user();
+        $query = BankAccount::with(['company', 'project']);
+
+        if (!$user->isSuperAdmin()) {
+            $query->where('company_id', $user->company_id);
+        }
+
+        $bankAccounts = $query->latest()->get();
         return view('admin.bank_accounts.index', compact('bankAccounts'));
     }
 
     public function create(): View
     {
-        $company = Company::first();
-        $companies = Company::all();
-        $projects = Project::where('is_active', true)->get();
+        $user = auth()->user();
+        $company = $user->isSuperAdmin() ? Company::first() : $user->company;
+        $companies = $user->isSuperAdmin() ? Company::all() : Company::where('id', $user->company_id)->get();
+        $projects = $user->isSuperAdmin()
+            ? Project::where('is_active', true)->get()
+            : Project::where('company_id', $user->company_id)->where('is_active', true)->get();
+
         $nextAccountCode = $this->autoNumberService->peekNextNumber('bank_account', $company?->id);
 
         return view('admin.bank_accounts.create', compact('company', 'companies', 'projects', 'nextAccountCode'));
@@ -35,6 +46,8 @@ class BankAccountController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $user = auth()->user();
+
         $validated = $request->validate([
             'company_id'        => ['required', 'exists:companies,id'],
             'account_type'      => ['required', 'in:general,project_linked,cash_account'],
@@ -47,6 +60,10 @@ class BankAccountController extends Controller
             'ifsc_code'         => ['nullable', 'string', 'max:50'],
             'is_default'        => ['boolean'],
         ]);
+
+        if (!$user->isSuperAdmin() && (int)$validated['company_id'] !== (int)$user->company_id) {
+            abort(403, 'Unauthorized. You can only create bank accounts for your own company.');
+        }
 
         $companyId = (int)$validated['company_id'];
         $accountCode = $this->autoNumberService->getNextNumber('bank_account', $companyId, true);
@@ -68,14 +85,26 @@ class BankAccountController extends Controller
 
     public function edit(BankAccount $bankAccount): View
     {
-        $companies = Company::all();
-        $projects = Project::where('is_active', true)->get();
+        $user = auth()->user();
+        if (!$user->isSuperAdmin() && $bankAccount->company_id !== $user->company_id) {
+            abort(403, 'Unauthorized. You cannot view or modify bank accounts belonging to another company.');
+        }
+
+        $companies = $user->isSuperAdmin() ? Company::all() : Company::where('id', $user->company_id)->get();
+        $projects = $user->isSuperAdmin()
+            ? Project::where('is_active', true)->get()
+            : Project::where('company_id', $user->company_id)->where('is_active', true)->get();
 
         return view('admin.bank_accounts.edit', compact('bankAccount', 'companies', 'projects'));
     }
 
     public function update(Request $request, BankAccount $bankAccount): RedirectResponse
     {
+        $user = auth()->user();
+        if (!$user->isSuperAdmin() && $bankAccount->company_id !== $user->company_id) {
+            abort(403, 'Unauthorized. You cannot modify bank accounts belonging to another company.');
+        }
+
         $validated = $request->validate([
             'company_id'        => ['required', 'exists:companies,id'],
             'account_type'      => ['required', 'in:general,project_linked,cash_account'],
@@ -88,6 +117,10 @@ class BankAccountController extends Controller
             'ifsc_code'         => ['nullable', 'string', 'max:50'],
             'is_default'        => ['boolean'],
         ]);
+
+        if (!$user->isSuperAdmin() && (int)$validated['company_id'] !== (int)$user->company_id) {
+            abort(403, 'Unauthorized. You cannot transfer a bank account to another company.');
+        }
 
         $validated['is_default'] = $request->boolean('is_default', false);
 
@@ -102,6 +135,11 @@ class BankAccountController extends Controller
 
     public function destroy(BankAccount $bankAccount): RedirectResponse
     {
+        $user = auth()->user();
+        if (!$user->isSuperAdmin() && $bankAccount->company_id !== $user->company_id) {
+            abort(403, 'Unauthorized. You cannot delete bank accounts belonging to another company.');
+        }
+
         if (!$bankAccount->canBeDeleted()) {
             return back()->withErrors([
                 'error' => "Bank Account '{$bankAccount->account_nick_name}' cannot be deleted because transactions have been recorded against it.",
