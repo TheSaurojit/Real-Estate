@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Estate ERP Studio - Comprehensive Software & Module Guide</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                            900: '#082f49',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; }
+            .card { break-inside: avoid; border: 1px solid #ddd !important; shadow: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-sky-500 selection:text-white">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-gradient-to-r from-slate-900 via-sky-950 to-slate-900 text-white sticky top-0 z-50 border-b border-sky-800/40 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-md shadow-sky-500/20">
+                    <i class="fa-solid fa-building text-white text-2xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xl font-extrabold tracking-tight">Real Estate ERP Studio</span>
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Enterprise Edition</span>
+                    </div>
+                    <p class="text-xs text-sky-300/80 font-medium">Property Lifecycle, Dual-Ledger Accounting & Site Operations Platform</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3 no-print">
+                <button onclick="window.print()" class="px-4 py-2 text-xs font-bold rounded-xl bg-slate-800 text-sky-200 hover:bg-slate-700 hover:text-white border border-sky-800/60 transition flex items-center space-x-2">
+                    <i class="fa-solid fa-print"></i>
+                    <span>Print / Save as PDF</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+
+        <!-- Hero: 2-Minute Executive Summary -->
+        <section class="bg-white rounded-3xl p-8 sm:p-10 border border-slate-200/80 shadow-sm relative overflow-hidden">
+            <div class="absolute right-0 top-0 w-96 h-96 bg-gradient-to-bl from-sky-100/60 to-transparent rounded-bl-full pointer-events-none"></div>
+            <div class="relative z-10 max-w-4xl">
+                <span class="inline-flex items-center space-x-2 px-3 py-1 rounded-lg bg-sky-50 text-sky-700 text-xs font-bold tracking-wide uppercase border border-sky-200 mb-4">
+                    <i class="fa-solid fa-bullhorn text-sky-500"></i>
+                    <span>Executive Presentation Summary</span>
+                </span>
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                    A Unified Operating System for Property Developers & Builders
+                </h1>
+                <p class="mt-4 text-base sm:text-lg text-slate-600 leading-relaxed">
+                    This software replaces scattered spreadsheets, offline paper ledgers, and disconnected accounting systems. It connects every stage of real estate development: <strong>land registry and RERA projects</strong>, <strong>dynamic flat bookings</strong>, <strong>dual-ledger accounting (taxable banking vs. cash)</strong>, <strong>on-site customization job sheets</strong>, <strong>construction material tracking</strong>, and <strong>automated generation of 12 legal and billing documents</strong>.
+                </p>
+
+                <!-- 4 Pillars Ribbon -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-8 border-t border-slate-100">
+                    <div class="p-4 rounded-2xl bg-sky-50/50 border border-sky-100">
+                        <div class="w-8 h-8 rounded-lg bg-sky-500 text-white flex items-center justify-center text-sm mb-2 shadow-sm">
+                            <i class="fa-solid fa-handshake"></i>
+                        </div>
+                        <h4 class="font-bold text-slate-900 text-sm">CRM & Bookings</h4>
+                        <p class="text-xs text-slate-500 mt-1">Flexible flat allocations, rate calculations & customer KYC.</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center text-sm mb-2 shadow-sm">
+                            <i class="fa-solid fa-scale-balanced"></i>
+                        </div>
+                        <h4 class="font-bold text-slate-900 text-sm">Dual-Ledger Engine</h4>
+                        <p class="text-xs text-slate-500 mt-1">Parallel taxable bank receipts & cash voucher accounting.</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-amber-50/50 border border-amber-100">
+                        <div class="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center text-sm mb-2 shadow-sm">
+                            <i class="fa-solid fa-trowel-bricks"></i>
+                        </div>
+                        <h4 class="font-bold text-slate-900 text-sm">Engineering & Site</h4>
+                        <p class="text-xs text-slate-500 mt-1">Add-on alterations, deductions & inter-site stock transfers.</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-rose-50/50 border border-rose-100">
+                        <div class="w-8 h-8 rounded-lg bg-rose-500 text-white flex items-center justify-center text-sm mb-2 shadow-sm">
+                            <i class="fa-solid fa-file-shield"></i>
+                        </div>
+                        <h4 class="font-bold text-slate-900 text-sm">Legal & Compliance</h4>
+                        <p class="text-xs text-slate-500 mt-1">RERA escrows, split cancellation refunds & 12 corporate deeds.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Search & Filter Controls -->
+        <section class="space-y-4 no-print">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-extrabold text-slate-900">Functional Modules Breakdown</h2>
+                    <p class="text-sm text-slate-500">Explore each module, its practical real-world purpose, and key capabilities.</p>
+                </div>
+                <!-- Search Input -->
+                <div class="relative w-full md:w-80">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input type="text" id="moduleSearch" onkeyup="filterModules()" placeholder="Search module or feature (e.g., escrow, GST, refund)..." 
+                        class="w-full pl-11 pr-4 py-2.5 rounded-2xl bg-white border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 shadow-sm transition">
+                </div>
+            </div>
+
+            <!-- Category Filter Tabs -->
+            <div class="flex items-center space-x-2 overflow-x-auto pb-2 text-xs font-semibold text-slate-600">
+                <button onclick="setCategory('all')" class="cat-btn px-4 py-2 rounded-xl bg-sky-600 text-white shadow-sm transition" data-cat="all">All Modules (12)</button>
+                <button onclick="setCategory('sales')" class="cat-btn px-4 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 transition" data-cat="sales">Sales & Bookings</button>
+                <button onclick="setCategory('finance')" class="cat-btn px-4 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 transition" data-cat="finance">Finance & Dual-Ledger</button>
+                <button onclick="setCategory('site')" class="cat-btn px-4 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 transition" data-cat="site">Site & Engineering</button>
+                <button onclick="setCategory('legal')" class="cat-btn px-4 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 transition" data-cat="legal">Legal & Documents</button>
+                <button onclick="setCategory('reports')" class="cat-btn px-4 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 transition" data-cat="reports">Reports & Analytics</button>
+            </div>
+        </section>
+
+        <!-- 12 Modules Cards Grid -->
+        <section id="modulesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <!-- Module 1 -->
+            <div class="card bg-white rounded-3xl p-7 border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition" data-category="legal sales">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-city"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 font-mono text-[11px] font-bold">MOD-01</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Multi-Company & Project Workspaces</h3>
+                    <p class="text-xs font-medium text-sky-600 mb-3">Enterprise multi-tenancy & statutory land registry</p>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        Manage multiple developer companies and individual housing projects from one portal, while keeping statutory land documents cleanly segregated.
+                    </p>
+                    <div class="space-y-2 text-xs text-slate-600 pt-3 border-t border-slate-100">
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Land Particulars:</strong> Tracks Daag No., Patta No., Holding No., Mouza, and Pogonah.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>RERA Compliance:</strong> Flags projects as Registered, Applied, or Exempted with numbers.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Context Switcher:</strong> Instant toggling between head office and specific site workspaces.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 pt-3 border-t border-slate-100 text-[11px] text-slate-400 font-medium">
+                    Eliminates mixing records between different corporate companies or sites.
+                </div>
+            </div>
+
+            <!-- Module 2 -->
+            <div class="card bg-white rounded-3xl p-7 border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition" data-category="finance">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-building-columns"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-mono text-[11px] font-bold">MOD-02</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Banking & RERA Escrow Master</h3>
+                    <p class="text-xs font-medium text-emerald-600 mb-3">Statutory escrow segregation & cash accounts</p>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        Strictly partitions developer funds into dedicated bank accounts to comply with banking regulations and statutory housing laws.
+                    </p>
+                    <div class="space-y-2 text-xs text-slate-600 pt-3 border-t border-slate-100">
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Project Escrow Accounts:</strong> Dedicated RERA bank accounts for customer collections.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>General Bank Accounts:</strong> Corporate operating, head-office, and administrative accounts.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Cash-in-Hand Register:</strong> Real-time tracking of internal site cash reserves.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 pt-3 border-t border-slate-100 text-[11px] text-slate-400 font-medium">
+                    Prevents illegal co-mingling of project funds and protects during audits.
+                </div>
+            </div>
+
+            <!-- Module 3 -->
+            <div class="card bg-white rounded-3xl p-7 border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition" data-category="sales">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-file-signature"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-mono text-[11px] font-bold">MOD-03</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Dynamic Flat & Unit Bookings</h3>
+                    <p class="text-xs font-medium text-indigo-600 mb-3">On-the-fly inventory, automated pricing & KYC</p>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        Allows sales reps to book flats on the fly with comprehensive pricing logic without rigid inventory obstacles.
+                    </p>
+                    <div class="space-y-2 text-xs text-slate-600 pt-3 border-t border-slate-100">
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Flexible Inventory:</strong> Enter Block, Floor, Unit No., and SBUA directly at booking.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Auto Pricing Matrix:</strong> Unit base rate + Parking + Transformer + Amenities.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Customer KYC & JDA:</strong> Tracks PAN, Aadhaar, and Landowner JV flags.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 pt-3 border-t border-slate-100 text-[11px] text-slate-400 font-medium">
+                    Cuts flat booking time to under 2 minutes with automated math verification.
+                </div>
+            </div>
+
+            <!-- Module 4 -->
+            <div class="card bg-white rounded-3xl p-7 border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition" data-category="finance">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-scale-balanced"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-lg bg-teal-50 text-teal-700 font-mono text-[11px] font-bold">MOD-04</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Dual-Ledger Accounting Engine</h3>
+                    <p class="text-xs font-medium text-teal-600 mb-3">Taxable Bank (Escrow) vs. Cash Ledger balance</p>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        Separates real estate transactions into official registered agreement bank receipts and non-taxable cash vouchers.
+                    </p>
+                    <div class="space-y-2 text-xs text-slate-600 pt-3 border-t border-slate-100">
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Money Receipts (MR):</strong> Official bank transaction receipts with GST compliance.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Receipt Vouchers (RV):</strong> Cash vouchers for on-site client alterations.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Rebalance Wizard:</strong> Adjusts excess banking collections to cash accounts cleanly.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 pt-3 border-t border-slate-100 text-[11px] text-slate-400 font-medium">
+                    Keeps official tax audits clean while giving management 100% total cash visibility.
+                </div>
+            </div>
+
+            <!-- Module 5 -->
+            <div class="card bg-white rounded-3xl p-7 border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition" data-category="site sales">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-sliders"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 font-mono text-[11px] font-bold">MOD-05</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Customization Job Sheets</h3>
+                    <p class="text-xs font-medium text-amber-600 mb-3">Add-ons vs. Dislodges (Material + Labor)</p>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        Bridges the gap between on-site client modification requests and the billing office.
+                    </p>
+                    <div class="space-y-2 text-xs text-slate-600 pt-3 border-t border-slate-100">
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Add-on Works:</strong> Extra AC lines, premium lights (material + labor).</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Dislodges (Deductions):</strong> Credit for buyer-supplied tiles + adjustment fees.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Live Bill Rollup:</strong> Updates supplementary value on the customer statement instantly.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 pt-3 border-t border-slate-100 text-[11px] text-slate-400 font-medium">
+                    Stops unbilled on-site builder losses from informal client modifications.
+                </div>
+            </div>
+
+            <!-- Module 6 -->
+            <div class="card bg-white rounded-3xl p-7 border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition" data-category="finance sales">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-landmark"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-lg bg-cyan-50 text-cyan-700 font-mono text-[11px] font-bold">MOD-06</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Home Loan & Bank Finance Tracker</h3>
+                    <p class="text-xs font-medium text-cyan-600 mb-3">Lending bank synchronization & disbursement</p>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        Monitors mortgage and home loan files across nationalized and private lending institutions.
+                    </p>
+                    <div class="space-y-2 text-xs text-slate-600 pt-3 border-t border-slate-100">
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Loan Pipeline:</strong> Tracks Applied, Sanctioned, Disbursed, or Rejected.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Lending Details:</strong> Stores loan account no., sanction dates, and bank branches.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Auto-Sync:</strong> Incoming bank disbursements automatically update loan records.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 pt-3 border-t border-slate-100 text-[11px] text-slate-400 font-medium">
+                    Prevents flat registrations from happening before all loan funds have been disbursed.
+                </div>
+            </div>
+
+            <!-- Module 7 -->
+            <div class="card bg-white rounded-3xl p-7 border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition" data-category="legal">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-stamp"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-lg bg-violet-50 text-violet-700 font-mono text-[11px] font-bold">MOD-07</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Legal Agreements & Registry Deeds</h3>
+                    <p class="text-xs font-medium text-violet-600 mb-3">Bayna-nama & Sub-Registrar Office deeds</p>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        Maintains formal legal documentation milestones from initial booking agreement to final conveyance.
+                    </p>
+                    <div class="space-y-2 text-xs text-slate-600 pt-3 border-t border-slate-100">
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Sale Agreement (Bayna-nama):</strong> Logs serial numbers, dates, and agreement value.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Sale Deed Tracking:</strong> Records SRO office, deed serial no., and registry dates.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Ledger Realignment:</strong> Automatically syncs tax values to formal agreement amounts.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 pt-3 border-t border-slate-100 text-[11px] text-slate-400 font-medium">
+                    Provides an iron-clad legal audit trail for every registered property.
+                </div>
+            </div>
+
+            <!-- Module 8 -->
+            <div class="card bg-white rounded-3xl p-7 border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition" data-category="legal finance">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-ban"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 font-mono text-[11px] font-bold">MOD-08</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Cancellations & 3-Way Split Refunds</h3>
+                    <p class="text-xs font-medium text-rose-600 mb-3">Lien protection & multi-party payout settlement</p>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        Eliminates developer liability when a buyer cancels after availing a bank home loan.
+                    </p>
+                    <div class="space-y-2 text-xs text-slate-600 pt-3 border-t border-slate-100">
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Penalty Retention:</strong> Deducts agreed contractual cancellation charges.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Bank Lien Repayment:</strong> Allocates refunds to clear lending bank loans first.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Customer Refunds:</strong> Splits remaining balances across bank and cash ledgers.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 pt-3 border-t border-slate-100 text-[11px] text-slate-400 font-medium">
+                    Protects builders from bank litigation and unauthorized cash refund claims.
+                </div>
+            </div>
+
+            <!-- Module 9 -->
+            <div class="card bg-white rounded-3xl p-7 border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition" data-category="site">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-truck-ramp-box"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-lg bg-orange-50 text-orange-700 font-mono text-[11px] font-bold">MOD-09</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Site Expenses & Stock Transfers</h3>
+                    <p class="text-xs font-medium text-orange-600 mb-3">Material procurement & inter-site inventory shifting</p>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        Tracks raw material consumption, contractor bills, and materials moved between active construction sites.
+                    </p>
+                    <div class="space-y-2 text-xs text-slate-600 pt-3 border-t border-slate-100">
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Site Procurement:</strong> Logs cement, steel, bricks, and contractor bills.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Inter-Project Transfers:</strong> Tracks material sent from Site A to Site B with vehicle challans.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Cost Allocation:</strong> Automatically reallocates material expense to destination site.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 pt-3 border-t border-slate-100 text-[11px] text-slate-400 font-medium">
+                    Prevents material theft, ghost invoices, and distorted project costs.
+                </div>
+            </div>
+
+            <!-- Module 10 -->
+            <div class="card bg-white rounded-3xl p-7 border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition" data-category="reports">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-chart-pie"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-mono text-[11px] font-bold">MOD-10</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Executive Reports & Profitability</h3>
+                    <p class="text-xs font-medium text-blue-600 mb-3">Live ROI, inventory velocity & payment aging</p>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        Delivers instant high-level analytics for directors and developers without waiting for month-end audits.
+                    </p>
+                    <div class="space-y-2 text-xs text-slate-600 pt-3 border-t border-slate-100">
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Profitability Analysis:</strong> Real-time Revenue vs. Direct Expenses & Net Margin %.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Customer Aging Matrix:</strong> Overdue dues grouped into 0-30, 31-60, 61-90, 90+ days.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Banking Escrow Flow:</strong> Live net liquid position across bank and cash balances.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 pt-3 border-t border-slate-100 text-[11px] text-slate-400 font-medium">
+                    Empowers management with immediate data for smarter cash-flow planning.
+                </div>
+            </div>
+
+            <!-- Module 11 -->
+            <div class="card bg-white rounded-3xl p-7 border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition" data-category="legal">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-fuchsia-50 text-fuchsia-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-print"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-lg bg-fuchsia-50 text-fuchsia-700 font-mono text-[11px] font-bold">MOD-11</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Document Hub & 12 Print Templates</h3>
+                    <p class="text-xs font-medium text-fuchsia-600 mb-3">1-click corporate letters, NOCs & tax receipts</p>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        Automates the generation of every standard legal and financial document used in real estate transactions.
+                    </p>
+                    <div class="space-y-2 text-xs text-slate-600 pt-3 border-t border-slate-100">
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Letters:</strong> Booking Confirmation, Allotment, Demand Notes, Possession.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Financial Statements:</strong> Final Bill, Money Receipts, 360° Account Statements.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Corporate Styling:</strong> Formatted with company headers, logos, and signatures.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 pt-3 border-t border-slate-100 text-[11px] text-slate-400 font-medium">
+                    Eliminates manual Word document typing and formatting errors completely.
+                </div>
+            </div>
+
+            <!-- Module 12 -->
+            <div class="card bg-white rounded-3xl p-7 border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition" data-category="legal finance">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-mono text-[11px] font-bold">MOD-12</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Auto-Numbering & Granular RBAC</h3>
+                    <p class="text-xs font-medium text-slate-600 mb-3">Thread-safe codes & 5 pre-configured roles</p>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        Enterprise security backbone ensuring strict audit trails and role-specific operational permissions.
+                    </p>
+                    <div class="space-y-2 text-xs text-slate-600 pt-3 border-t border-slate-100">
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>Sequential Auto-Numbers:</strong> Formats like SSI/BK-1001, SSI/RCD1001 without collisions.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>5 System Roles:</strong> Super Admin, Admin, Manager, Accountant, Site Engineer.</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[11px] mt-0.5 shrink-0"></i>
+                            <span><strong>20+ Granular Permissions:</strong> Restricts viewing or editing of sensitive financial ledgers.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 pt-3 border-t border-slate-100 text-[11px] text-slate-400 font-medium">
+                    Guarantees bulletproof data privacy and tamper-proof financial numbering.
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Document Printing Showcase -->
+        <section class="bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 text-white rounded-3xl p-8 sm:p-10 shadow-xl border border-sky-800/40">
+            <div class="max-w-3xl mb-8">
+                <span class="inline-flex items-center space-x-2 px-3 py-1 rounded-lg bg-sky-500/20 text-sky-300 text-xs font-bold tracking-wide uppercase border border-sky-400/30 mb-3">
+                    <i class="fa-solid fa-stamp"></i>
+                    <span>Ready for Print</span>
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">The 12 Corporate Print-Ready Document Templates</h2>
+                <p class="text-sm text-sky-200/80 mt-2">All templates feature company header letterheads, legal stamps, dynamic calculations, and signatory boxes:</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+                <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex items-center space-x-3">
+                    <i class="fa-solid fa-file-circle-check text-sky-400 text-base"></i>
+                    <div>
+                        <div class="font-bold text-white">Booking Confirmation Letter</div>
+                        <div class="text-[11px] text-slate-400">Welcome note with flat specs & schedule</div>
+                    </div>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex items-center space-x-3">
+                    <i class="fa-solid fa-file-signature text-indigo-400 text-base"></i>
+                    <div>
+                        <div class="font-bold text-white">Property Allotment Letter</div>
+                        <div class="text-[11px] text-slate-400">Legal certificate of unit & parking allotment</div>
+                    </div>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex items-center space-x-3">
+                    <i class="fa-solid fa-envelope-open-text text-amber-400 text-base"></i>
+                    <div>
+                        <div class="font-bold text-white">Demand Notice / Call Letter</div>
+                        <div class="text-[11px] text-slate-400">Milestone installment notice with escrow details</div>
+                    </div>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex items-center space-x-3">
+                    <i class="fa-solid fa-file-invoice-dollar text-emerald-400 text-base"></i>
+                    <div>
+                        <div class="font-bold text-white">Final Bill & Settlement Statement</div>
+                        <div class="text-[11px] text-slate-400">Comprehensive master invoice with balance due</div>
+                    </div>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex items-center space-x-3">
+                    <i class="fa-solid fa-landmark text-teal-400 text-base"></i>
+                    <div>
+                        <div class="font-bold text-white">Bank Loan NOC</div>
+                        <div class="text-[11px] text-slate-400">No objection letter for customer home loan bank</div>
+                    </div>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex items-center space-x-3">
+                    <i class="fa-solid fa-key text-purple-400 text-base"></i>
+                    <div>
+                        <div class="font-bold text-white">Possession & Key Handover Certificate</div>
+                        <div class="text-[11px] text-slate-400">Handover protocol with meter numbers</div>
+                    </div>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex items-center space-x-3">
+                    <i class="fa-solid fa-building-columns text-emerald-400 text-base"></i>
+                    <div>
+                        <div class="font-bold text-white">Money Receipt (Taxable Banking)</div>
+                        <div class="text-[11px] text-slate-400">Official GST-compliant tax receipt for bank deposits</div>
+                    </div>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex items-center space-x-3">
+                    <i class="fa-solid fa-money-bill-wave text-amber-400 text-base"></i>
+                    <div>
+                        <div class="font-bold text-white">Receipt Voucher (Cash Ledger)</div>
+                        <div class="text-[11px] text-slate-400">Internal voucher for alterations & cash accounts</div>
+                    </div>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex items-center space-x-3">
+                    <i class="fa-solid fa-hand-holding-dollar text-rose-400 text-base"></i>
+                    <div>
+                        <div class="font-bold text-white">Payment & Refund Voucher</div>
+                        <div class="text-[11px] text-slate-400">Outward payment disbursement voucher</div>
+                    </div>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex items-center space-x-3">
+                    <i class="fa-solid fa-sliders text-indigo-400 text-base"></i>
+                    <div>
+                        <div class="font-bold text-white">Technical Customization Job Sheet</div>
+                        <div class="text-[11px] text-slate-400">Itemized material and labor engineering sheet</div>
+                    </div>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex items-center space-x-3">
+                    <i class="fa-solid fa-scale-balanced text-blue-400 text-base"></i>
+                    <div>
+                        <div class="font-bold text-white">Customer 360° Account Statement</div>
+                        <div class="text-[11px] text-slate-400">Complete chronological ledger of debits & credits</div>
+                    </div>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex items-center space-x-3">
+                    <i class="fa-solid fa-ban text-rose-400 text-base"></i>
+                    <div>
+                        <div class="font-bold text-white">Booking Cancellation Deed</div>
+                        <div class="text-[11px] text-slate-400">Legal termination deed with penalty & refund payout</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Technical Foundation Summary -->
+        <section class="bg-white rounded-3xl p-8 border border-slate-200/80 text-xs text-slate-600 space-y-3">
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Technology Stack & Architecture</h3>
+            <p>
+                Built on <strong>Laravel</strong>, styled with <strong>Tailwind CSS</strong>, with dynamic client interactions powered by <strong>Alpine.js</strong>. Uses database transactions and pessimistic locking for auto-numbering to prevent voucher duplicate errors during concurrent peak booking hours. Fully modular, responsive, and mobile-friendly for on-site managers.
+            </p>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-400">
+        <p>Real Estate ERP Studio &bull; Software Feature & Module Guide &bull; Ready for Client & Stakeholder Presentation</p>
+    </footer>
+
+    <!-- Interactive Filter Script -->
+    <script>
+        function setCategory(cat) {
+            // Update active tab styling
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.dataset.cat === cat) {
+                    btn.className = 'cat-btn px-4 py-2 rounded-xl bg-sky-600 text-white shadow-sm transition';
+                } else {
+                    btn.className = 'cat-btn px-4 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 transition';
+                }
+            });
+
+            // Filter cards
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                const categories = card.dataset.category || '';
+                if (cat === 'all' || categories.includes(cat)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function filterModules() {
+            const query = document.getElementById('moduleSearch').value.toLowerCase().trim();
+            const cards = document.querySelectorAll('.card');
+
+            cards.forEach(card => {
+                const text = card.innerText.toLowerCase();
+                if (!query || text.includes(query)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

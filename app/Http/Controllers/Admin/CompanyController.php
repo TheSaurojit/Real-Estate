@@ -171,6 +171,10 @@ class CompanyController extends Controller
             ]);
         }
 
+        if ($company->logo_path && Storage::disk('public')->exists($company->logo_path)) {
+            Storage::disk('public')->delete($company->logo_path);
+        }
+
         $company->delete();
 
         return redirect()->route('admin.companies.index')->with('success', 'Company deleted successfully!');
