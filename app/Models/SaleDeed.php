@@ -14,13 +14,16 @@ class SaleDeed extends Model
         'booking_id',
         'sale_deed_no',
         'executed_date',
+        'sale_deed_value',
         'sub_registrar_office',
+        'executed_in',
         'status',
         'remarks',
     ];
 
     protected $casts = [
-        'executed_date' => 'date',
+        'executed_date'   => 'date',
+        'sale_deed_value' => 'decimal:2',
     ];
 
     public function booking(): BelongsTo

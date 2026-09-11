@@ -177,10 +177,11 @@
                         </label>
                         <select id="parking_type" name="parking_type" required
                                 class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none transition">
-                            <option value="none">No Parking</option>
-                            <option value="private_covered">Covered Garage</option>
-                            <option value="private_open">Open Dedicated Bay</option>
-                            <option value="shared">Shared Parking</option>
+                            <option value="no_parking" {{ old('parking_type') === 'no_parking' ? 'selected' : '' }}>No Parking</option>
+                            <option value="covered_garage" {{ old('parking_type') === 'covered_garage' ? 'selected' : '' }}>Covered Garage</option>
+                            <option value="open_dedicated_bay" {{ old('parking_type') === 'open_dedicated_bay' ? 'selected' : '' }}>Open Dedicated Bay</option>
+                            <option value="shared_parking" {{ old('parking_type') === 'shared_parking' ? 'selected' : '' }}>Shared Parking</option>
+                            <option value="open_dedicated_parking" {{ old('parking_type') === 'open_dedicated_parking' ? 'selected' : '' }}>Open Dedicated Parking</option>
                         </select>
                     </div>
 

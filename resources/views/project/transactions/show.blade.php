@@ -45,10 +45,18 @@
             <div class="text-right space-y-1">
                 <div class="inline-block px-3 py-1 rounded-lg font-bold uppercase text-xs tracking-wider {{ $transaction->voucher_type === 'money_receipt' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : ($transaction->voucher_type === 'receipt_voucher' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-rose-100 text-rose-900 border border-rose-300') }}">
                     {{ str_replace('_', ' ', strtoupper($transaction->voucher_type)) }}
+                    @if($transaction->voucher_type === 'payment_voucher')
+                        <span>({{ ($transaction->payment_category ?? ($transaction->is_taxable_transaction ? 'taxable' : 'non_taxable')) === 'taxable' ? 'TAXABLE' : 'NON-TAXABLE' }})</span>
+                    @endif
                 </div>
                 <div class="text-xs font-mono font-bold text-slate-800 pt-1">
-                    No: {{ $transaction->transaction_code }}
+                    Code: {{ $transaction->transaction_code }}
                 </div>
+                @if($transaction->voucher_no)
+                    <div class="text-xs font-mono font-bold text-indigo-800">
+                        Voucher No: {{ $transaction->voucher_no }}
+                    </div>
+                @endif
                 <div class="text-xs text-slate-500">
                     Date: <strong>{{ $transaction->voucher_date->format('d M, Y') }}</strong>
                 </div>
@@ -119,6 +127,14 @@
                         {{ ucfirst(str_replace('_', ' ', $transaction->instrument_status)) }}
                     </span>
                 </div>
+                @if($transaction->voucher_type === 'payment_voucher')
+                    <div class="col-span-2 pt-1 border-t border-slate-100">
+                        <span class="text-slate-500 block">Payment Category:</span>
+                        <span class="font-bold {{ ($transaction->payment_category ?? ($transaction->is_taxable_transaction ? 'taxable' : 'non_taxable')) === 'taxable' ? 'text-rose-700' : 'text-amber-700' }}">
+                            {{ ($transaction->payment_category ?? ($transaction->is_taxable_transaction ? 'taxable' : 'non_taxable')) === 'taxable' ? 'Taxable Payment (Agreement & Bank Escrow Outflow)' : 'Non-Taxable Payment (Cash Payout)' }}
+                        </span>
+                    </div>
+                @endif
             </div>
 
             @if($transaction->particulars)

@@ -9,6 +9,8 @@
             <nav class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1 flex items-center space-x-2">
                 <a href="{{ route('project.dashboard', $project->id) }}" class="hover:text-sky-600">{{ $project->name }}</a>
                 <span>/</span>
+                <a href="{{ route('project.transactions.index', $project->id) }}" class="hover:text-sky-600">Transactions Ledger</a>
+                <span>/</span>
                 <a href="{{ route('project.bookings.show', [$project->id, $booking->id]) }}" class="hover:text-sky-600">{{ $booking->booking_code }}</a>
                 <span>/</span>
                 <span class="text-indigo-600">Cross-Ledger Adjustment</span>
@@ -16,9 +18,14 @@
             <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Cross-Ledger Overpayment Rebalance Wizard</h1>
             <p class="text-xs text-slate-500 mt-0.5">Rebalance excess collections in the Taxable Banking stream to the Non-Taxable Cash ledger with full legal GST audit safety.</p>
         </div>
-        <a href="{{ route('project.bookings.show', [$project->id, $booking->id]) }}" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-semibold transition">
-            <i class="fa-solid fa-arrow-left mr-1"></i> Back to Overview
-        </a>
+        <div class="flex items-center space-x-2">
+            <a href="{{ route('project.transactions.index', $project->id) }}" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition">
+                <i class="fa-solid fa-list mr-1"></i> Ledger
+            </a>
+            <a href="{{ route('project.bookings.show', [$project->id, $booking->id]) }}" class="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-semibold transition">
+                <i class="fa-solid fa-arrow-left mr-1"></i> Booking Overview
+            </a>
+        </div>
     </div>
 
     @php

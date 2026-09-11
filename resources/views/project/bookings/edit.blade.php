@@ -168,10 +168,11 @@
                         </label>
                         <select id="parking_type" name="parking_type" required
                                 class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none transition">
-                            <option value="none" {{ old('parking_type', $booking->parking_type) === 'none' ? 'selected' : '' }}>No Parking</option>
-                            <option value="private_covered" {{ old('parking_type', $booking->parking_type) === 'private_covered' ? 'selected' : '' }}>Covered Garage</option>
-                            <option value="private_open" {{ old('parking_type', $booking->parking_type) === 'private_open' ? 'selected' : '' }}>Open Dedicated Bay</option>
-                            <option value="shared" {{ old('parking_type', $booking->parking_type) === 'shared' ? 'selected' : '' }}>Shared Parking</option>
+                            <option value="no_parking" {{ in_array(old('parking_type', $booking->parking_type), ['none', 'no_parking']) ? 'selected' : '' }}>No Parking</option>
+                            <option value="covered_garage" {{ in_array(old('parking_type', $booking->parking_type), ['private_covered', 'covered_garage']) ? 'selected' : '' }}>Covered Garage</option>
+                            <option value="open_dedicated_bay" {{ in_array(old('parking_type', $booking->parking_type), ['private_open', 'open_dedicated_bay']) ? 'selected' : '' }}>Open Dedicated Bay</option>
+                            <option value="shared_parking" {{ in_array(old('parking_type', $booking->parking_type), ['shared', 'shared_parking']) ? 'selected' : '' }}>Shared Parking</option>
+                            <option value="open_dedicated_parking" {{ old('parking_type', $booking->parking_type) === 'open_dedicated_parking' ? 'selected' : '' }}>Open Dedicated Parking</option>
                         </select>
                     </div>
 

@@ -12,10 +12,14 @@ use App\Http\Controllers\Project\BankFinanceController;
 use App\Http\Controllers\Project\BookingController;
 use App\Http\Controllers\Project\CancellationRefundController;
 use App\Http\Controllers\Project\DashboardController as ProjectDashboardController;
+use App\Http\Controllers\Project\DocumentController;
+use App\Http\Controllers\Project\ExpenseController;
 use App\Http\Controllers\Project\JobSheetController;
 use App\Http\Controllers\Project\ProjectSwitcherController;
+use App\Http\Controllers\Project\ReportController;
 use App\Http\Controllers\Project\SaleAgreementController;
 use App\Http\Controllers\Project\SaleDeedController;
+use App\Http\Controllers\Project\StockTransferController;
 use App\Http\Controllers\Project\TransactionController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -97,7 +101,9 @@ Route::middleware(['auth'])->group(function () {
 
         // Customization Job Sheets (Add-ons vs Dislodges)
         Route::post('bookings/{booking}/jobsheets', [JobSheetController::class, 'store'])->name('bookings.jobsheets.store')->middleware('permission:manage_jobsheets');
+        Route::put('bookings/{booking}/jobsheets/{customization}', [JobSheetController::class, 'update'])->name('bookings.jobsheets.update')->middleware('permission:manage_jobsheets');
         Route::delete('bookings/{booking}/jobsheets/{customization}', [JobSheetController::class, 'destroy'])->name('bookings.jobsheets.destroy')->middleware('permission:manage_jobsheets');
+        Route::post('bookings/{booking}/adjustments', [JobSheetController::class, 'updateAdjustments'])->name('bookings.adjustments.update')->middleware('permission:manage_jobsheets');
 
         // Sale Agreement (Bayna-nama)
         Route::put('bookings/{booking}/sale-agreement', [SaleAgreementController::class, 'update'])->name('bookings.sale-agreement.update')->middleware('permission:manage_sale_agreements');
@@ -112,35 +118,48 @@ Route::middleware(['auth'])->group(function () {
         Route::get('bookings/{booking}/adjustment', [TransactionController::class, 'createAdjustment'])->name('bookings.adjustment.create')->middleware('permission:manage_adjustments');
         Route::post('bookings/{booking}/adjustment', [TransactionController::class, 'storeAdjustment'])->name('bookings.adjustment.store')->middleware('permission:manage_adjustments');
 
-        // Cancellation Split Refunds
+        // Stage 2.1.6 Booking Cancellation & 3-Account Reconciliation
+        Route::get('cancellations', [CancellationRefundController::class, 'show'])->name('cancellations.index')->middleware('permission:cancel_bookings');
+        Route::get('bookings/{booking}/cancellation', [CancellationRefundController::class, 'show'])->name('bookings.cancellation.show')->middleware('permission:cancel_bookings');
         Route::get('bookings/{booking}/cancellation-refund', [CancellationRefundController::class, 'show'])->name('bookings.cancellation-refund.show')->middleware('permission:create_refunds');
+        Route::post('bookings/{booking}/cancellation/status', [CancellationRefundController::class, 'updateStatus'])->name('bookings.cancellation.status')->middleware('permission:cancel_bookings');
+        Route::post('bookings/{booking}/cancellation/instructions', [CancellationRefundController::class, 'updateInstructions'])->name('bookings.cancellation.instructions')->middleware('permission:cancel_bookings');
         Route::post('bookings/{booking}/cancellation-refund', [CancellationRefundController::class, 'store'])->name('bookings.cancellation-refund.store')->middleware('permission:create_refunds');
+        Route::post('bookings/{booking}/cancellation/payout', [CancellationRefundController::class, 'store'])->name('bookings.cancellation.payout')->middleware('permission:create_refunds');
 
         // Financial Transactions & Dual-Ledger Management
         Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index')->middleware('permission:view_transactions');
         Route::get('transactions/create', [TransactionController::class, 'create'])->name('transactions.create')->middleware('permission:create_receipts');
         Route::post('transactions', [TransactionController::class, 'store'])->name('transactions.store')->middleware('permission:create_receipts');
         Route::get('transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show')->middleware('permission:view_transactions');
-        Route::get('transactions/{transaction}/edit', [TransactionController::class, 'edit'])->name('transactions.edit')->middleware('permission:view_transactions');
-        Route::put('transactions/{transaction}', [TransactionController::class, 'update'])->name('transactions.update')->middleware('permission:view_transactions');
-        Route::delete('transactions/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy')->middleware('permission:view_transactions');
+        Route::get('transactions/{transaction}/edit', [TransactionController::class, 'edit'])->name('transactions.edit')->middleware('permission:create_receipts');
+        Route::put('transactions/{transaction}', [TransactionController::class, 'update'])->name('transactions.update')->middleware('permission:create_receipts');
+        Route::delete('transactions/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy')->middleware('permission:create_receipts');
         Route::put('transactions/{transaction}/status', [TransactionController::class, 'updateStatus'])->name('transactions.status.update')->middleware('permission:manage_cheques');
 
         // Document Printing Hub & 12 Print-Ready Templates
-        Route::get('documents', [\App\Http\Controllers\Project\DocumentController::class, 'index'])->name('documents.index')->middleware('permission:print_documents');
-        Route::get('bookings/{booking}/documents/{documentType}', [\App\Http\Controllers\Project\DocumentController::class, 'show'])->name('documents.show')->middleware('permission:print_documents');
+        Route::get('documents', [DocumentController::class, 'index'])->name('documents.index')->middleware('permission:print_documents');
+        Route::get('bookings/{booking}/documents/{documentType}', [DocumentController::class, 'show'])->name('documents.show')->middleware('permission:print_documents');
 
         // Site Expenses & Material Purchases
-        Route::resource('expenses', \App\Http\Controllers\Project\ExpenseController::class)->middleware('permission:manage_expenses');
+        Route::resource('expenses', ExpenseController::class)->middleware('permission:manage_expenses');
 
         // Inter-Project Stock Transfers
-        Route::resource('stock-transfers', \App\Http\Controllers\Project\StockTransferController::class)->middleware('permission:manage_expenses');
+        Route::resource('stock-transfers', StockTransferController::class)->middleware('permission:manage_expenses');
 
-        // Executive Reports & Profitability Analytics
-        Route::get('reports', [\App\Http\Controllers\Project\ReportController::class, 'index'])->name('reports.index')->middleware('permission:view_booking_reports,view_financial_reports');
-        Route::get('reports/profitability', [\App\Http\Controllers\Project\ReportController::class, 'profitability'])->name('reports.profitability')->middleware('permission:view_financial_reports');
-        Route::get('reports/inventory', [\App\Http\Controllers\Project\ReportController::class, 'inventory'])->name('reports.inventory')->middleware('permission:view_booking_reports');
-        Route::get('reports/aging', [\App\Http\Controllers\Project\ReportController::class, 'aging'])->name('reports.aging')->middleware('permission:view_financial_reports');
-        Route::get('reports/banking', [\App\Http\Controllers\Project\ReportController::class, 'banking'])->name('reports.banking')->middleware('permission:view_financial_reports');
+        // Section 2.3 Comprehensive Reporting Modules & Excel Exports
+        Route::get('reports', [ReportController::class, 'index'])->name('reports.index')->middleware('permission:view_booking_reports,view_financial_reports');
+        Route::get('reports/bookings-general', [ReportController::class, 'bookingsGeneral'])->name('reports.bookings.general')->middleware('permission:view_booking_reports');
+        Route::get('reports/bookings-financial', [ReportController::class, 'bookingsFinancial'])->name('reports.bookings.financial')->middleware('permission:view_financial_reports');
+        Route::get('reports/receipts', [ReportController::class, 'receipts'])->name('reports.receipts')->middleware('permission:view_financial_reports');
+        Route::get('reports/refunds', [ReportController::class, 'refunds'])->name('reports.refunds')->middleware('permission:view_financial_reports');
+        Route::get('reports/customizations', [ReportController::class, 'customizations'])->name('reports.customizations')->middleware('permission:view_booking_reports');
+        Route::get('reports/quick-summary', [ReportController::class, 'quickSummary'])->name('reports.quick-summary')->middleware('permission:view_booking_reports,view_financial_reports');
+
+        // Executive Analytics Statements
+        Route::get('reports/profitability', [ReportController::class, 'profitability'])->name('reports.profitability')->middleware('permission:view_financial_reports');
+        Route::get('reports/inventory', [ReportController::class, 'inventory'])->name('reports.inventory')->middleware('permission:view_booking_reports');
+        Route::get('reports/aging', [ReportController::class, 'aging'])->name('reports.aging')->middleware('permission:view_financial_reports');
+        Route::get('reports/banking', [ReportController::class, 'banking'])->name('reports.banking')->middleware('permission:view_financial_reports');
     });
 });

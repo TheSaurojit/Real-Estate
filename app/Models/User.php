@@ -69,6 +69,24 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user has any of the given permissions
+     */
+    public function hasAnyPermission(array $permissionSlugs): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        foreach ($permissionSlugs as $slug) {
+            if ($this->hasPermission($slug)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Check if user is Super Admin
      */
     public function isSuperAdmin(): bool

@@ -54,15 +54,21 @@ class Booking extends Model
         'tax_rate',
         'tax_amount',
         'supplementary_value',
+        'adjustments',
+        'gross_booking_value',
+        'final_booking_value',
         'total_booking_value',
         // Dual Ledger Split
         'taxable_agreement_value',
         'taxable_gst_value',
         'gross_taxable_value',
         'gross_cash_value',
+        'party_self_taxable',
+        'party_non_taxable_cash',
         // Status & Lifecycle
         'status',
         'cancellation_date',
+        'cancellation_days_gap',
         'cancellation_charge',
         'cancellation_remarks',
         'created_by',
@@ -84,12 +90,18 @@ class Booking extends Model
         'tax_rate'                => 'decimal:2',
         'tax_amount'              => 'decimal:2',
         'supplementary_value'     => 'decimal:2',
+        'adjustments'             => 'decimal:2',
+        'gross_booking_value'     => 'decimal:2',
+        'final_booking_value'     => 'decimal:2',
         'total_booking_value'     => 'decimal:2',
         'taxable_agreement_value' => 'decimal:2',
         'taxable_gst_value'       => 'decimal:2',
         'gross_taxable_value'     => 'decimal:2',
         'gross_cash_value'        => 'decimal:2',
+        'party_self_taxable'      => 'decimal:2',
+        'party_non_taxable_cash'  => 'decimal:2',
         'cancellation_date'       => 'date',
+        'cancellation_days_gap'   => 'integer',
         'cancellation_charge'     => 'decimal:2',
     ];
 
@@ -207,6 +219,88 @@ class Booking extends Model
     }
 
     /**
+     * Cleared Receipts from Bank Loan
+     */
+    public function getLoanReceivedAttribute(): float
+    {
+        return (float)$this->transactions()
+            ->where('voucher_type', 'money_receipt')
+            ->where('source_of_payment', 'through_loan_account')
+            ->whereIn('instrument_status', ['cleared', 'not_applicable'])
+            ->sum('amount');
+    }
+
+    /**
+     * Cleared Taxable Receipts from Self (Money Receipts)
+     */
+    public function getTaxableSelfReceivedAttribute(): float
+    {
+        return (float)$this->transactions()
+            ->where('is_taxable_transaction', true)
+            ->where('voucher_type', 'money_receipt')
+            ->where('source_of_payment', 'self')
+            ->whereIn('instrument_status', ['cleared', 'not_applicable'])
+            ->sum('amount');
+    }
+
+    /**
+     * Cleared Refund Payouts to Bank Loan
+     */
+    public function getLoanRefundedAttribute(): float
+    {
+        $refundRow = $this->cancellationRefund;
+        if ($refundRow && (float)$refundRow->refunded_to_bank_loan > 0) {
+            return (float)$refundRow->refunded_to_bank_loan;
+        }
+        return (float)$this->transactions()
+            ->where('voucher_category', 'payment_refund')
+            ->where('particulars', 'like', '%bank_loan%')
+            ->sum('amount');
+    }
+
+    /**
+     * Cleared Refund Payouts to Party Taxable
+     */
+    public function getTaxableSelfRefundedAttribute(): float
+    {
+        $refundRow = $this->cancellationRefund;
+        if ($refundRow && (float)$refundRow->refunded_to_party_taxable > 0) {
+            return (float)$refundRow->refunded_to_party_taxable;
+        }
+        return (float)$this->transactions()
+            ->where('voucher_category', 'payment_refund')
+            ->where(function ($q) {
+                $q->where('payment_category', 'taxable')
+                  ->orWhere('particulars', 'like', '%party_taxable%')
+                  ->orWhere(function ($sub) {
+                      $sub->whereNull('payment_category')->where('is_taxable_transaction', true);
+                  });
+            })
+            ->sum('amount');
+    }
+
+    /**
+     * Cleared Refund Payouts to Party Cash
+     */
+    public function getCashRefundedAttribute(): float
+    {
+        $refundRow = $this->cancellationRefund;
+        if ($refundRow && (float)$refundRow->refunded_to_party_cash > 0) {
+            return (float)$refundRow->refunded_to_party_cash;
+        }
+        return (float)$this->transactions()
+            ->where('voucher_category', 'payment_refund')
+            ->where(function ($q) {
+                $q->where('payment_category', 'non_taxable')
+                  ->orWhere('particulars', 'like', '%party_cash%')
+                  ->orWhere(function ($sub) {
+                      $sub->whereNull('payment_category')->where('is_taxable_transaction', false);
+                  });
+            })
+            ->sum('amount');
+    }
+
+    /**
      * Recalculates all pricing, consideration, supplementary job sheets, and dual-accounting splits
      */
     public function recalculateTotals(): self
@@ -223,46 +317,63 @@ class Booking extends Model
             2
         );
 
-        // 3. Consideration Value = Gross Total - Discount
+        // 3. Consideration Value = Gross Total - Discount (Stage 2.1.1)
         $this->consideration_value = max(0, round((float)$this->gross_total - (float)$this->discount_applied, 2));
 
-        // 4. Base GST Tax Amount
-        $this->tax_amount = round(((float)$this->consideration_value * (float)$this->tax_rate) / 100, 2);
-
-        // 5. Supplementary Value from Customization Job Sheets (Addons - Dislodges)
+        // 4. Supplementary Value from Customization Job Sheets (Addons - Dislodges)
         $addons = (float)$this->customizations()->where('job_type', 'addon')->sum('job_total');
         $dislodges = (float)$this->customizations()->where('job_type', 'dislodge')->sum('job_total');
         $this->supplementary_value = round($addons - $dislodges, 2);
 
-        // 6. Total Booking Value
-        $this->total_booking_value = round((float)$this->consideration_value + (float)$this->tax_amount + (float)$this->supplementary_value, 2);
-
-        // 7. Dual Accounting Split
+        // 5. Sale Agreement Stage 2.1.3 values
         $saleAgr = $this->saleAgreement()->first();
         if ($saleAgr && (float)$saleAgr->agreement_value > 0) {
-            $agrValue = (float)$saleAgr->agreement_value;
+            $taxableValue = (float)$saleAgr->agreement_value;
             $taxRate = (float)$saleAgr->tax_rate;
-            $taxValue = round(($agrValue * $taxRate) / 100, 2);
-            $grossTaxable = round($agrValue + $taxValue, 2);
-            $grossCash = max(0, round((float)$this->total_booking_value - $agrValue, 2));
-
-            $this->taxable_agreement_value = $agrValue;
-            $this->taxable_gst_value = $taxValue;
-            $this->gross_taxable_value = $grossTaxable;
-            $this->gross_cash_value = $grossCash;
-
-            // Sync with saleAgreement model
-            $saleAgr->update([
-                'tax_value'           => $taxValue,
-                'gross_taxable_value' => $grossTaxable,
-                'cash_value'          => $grossCash,
-            ]);
+            $taxValue = round(($taxableValue * $taxRate) / 100, 2);
         } else {
-            // Default split before formal Sale Agreement is executed
-            $this->taxable_agreement_value = $this->consideration_value;
-            $this->taxable_gst_value = $this->tax_amount;
-            $this->gross_taxable_value = round((float)$this->consideration_value + (float)$this->tax_amount, 2);
-            $this->gross_cash_value = (float)$this->supplementary_value;
+            // By default, system will take taxable value equal to consideration value at stage 2.1.1
+            $taxableValue = (float)$this->consideration_value;
+            $taxRate = (float)$this->tax_rate;
+            $taxValue = round(($taxableValue * $taxRate) / 100, 2);
+        }
+
+        $this->tax_amount = $taxValue;
+        $this->tax_rate = $taxRate;
+
+        // 6. Gross Booking Value = Consideration value + Tax value + Supplement value
+        $this->gross_booking_value = round((float)$this->consideration_value + (float)$taxValue + (float)$this->supplementary_value, 2);
+
+        // 7. Final Booking Value = Gross booking value - adjustments/discount
+        $adjustments = (float)($this->adjustments ?? 0);
+        $this->final_booking_value = max(0, round($this->gross_booking_value - $adjustments, 2));
+        $this->total_booking_value = $this->final_booking_value;
+
+        // 8. Gross Taxable Value = Taxable value + Tax value
+        $grossTaxableValue = round($taxableValue + $taxValue, 2);
+        $this->taxable_agreement_value = $taxableValue;
+        $this->taxable_gst_value = $taxValue;
+        $this->gross_taxable_value = $grossTaxableValue;
+
+        // 9. Finance value (sanctioned loan from Bank Finance stage)
+        $bankFinance = $this->bankFinance()->first();
+        $financeValue = (float)($bankFinance?->sanctioned_amount ?? 0);
+
+        // 10. Dual Accounting Splits
+        // Party (Self arrangement-taxable) = Gross Taxable value - Finance value
+        $this->party_self_taxable = max(0, round($grossTaxableValue - $financeValue, 2));
+
+        // Party (Self arrangement-non taxable/cash) = Final Booking value - Gross Taxable value
+        $this->party_non_taxable_cash = max(0, round($this->final_booking_value - $grossTaxableValue, 2));
+        $this->gross_cash_value = $this->party_non_taxable_cash;
+
+        if ($saleAgr) {
+            $saleAgr->update([
+                'tax_rate'            => $taxRate,
+                'tax_value'           => $taxValue,
+                'gross_taxable_value' => $grossTaxableValue,
+                'cash_value'          => $this->party_non_taxable_cash,
+            ]);
         }
 
         $this->save();

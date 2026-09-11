@@ -93,7 +93,27 @@ class TransactionController extends Controller
                 ->count(),
         ];
 
-        return view('project.transactions.index', compact('project', 'transactions', 'stats'));
+        // Bookings with excess taxable receipts eligible for cross-ledger rebalancing
+        $overpaidBookings = $project->bookings()
+            ->where('status', '!=', 'cancelled')
+            ->with(['saleAgreement', 'bankFinance', 'customizations', 'transactions'])
+            ->get()
+            ->filter(fn($b) => $b->total_taxable_received > $b->gross_taxable_value)
+            ->values();
+
+        // All active project bookings for manual selection in wizards
+        $allProjectBookings = $project->bookings()
+            ->where('status', '!=', 'cancelled')
+            ->latest('booking_date')
+            ->get(['id', 'booking_code', 'customer_name', 'unit_no']);
+
+        return view('project.transactions.index', compact(
+            'project',
+            'transactions',
+            'stats',
+            'overpaidBookings',
+            'allProjectBookings'
+        ));
     }
 
     /**
@@ -138,6 +158,8 @@ class TransactionController extends Controller
         $validated = $request->validate([
             'booking_id'              => ['required', 'exists:bookings,id'],
             'voucher_type'            => ['required', 'in:money_receipt,receipt_voucher,payment_voucher,adjustment_voucher'],
+            'payment_category'        => ['nullable', 'required_if:voucher_type,payment_voucher', 'in:taxable,non_taxable'],
+            'voucher_no'              => ['nullable', 'string', 'max:100'],
             'voucher_date'            => ['required', 'date'],
             'transaction_mode'        => ['required', 'in:cash,cheque,neft,rtgs,dd,upi,bank_transfer'],
             'source_of_payment'       => ['required', 'in:self,through_loan_account'],
@@ -153,8 +175,27 @@ class TransactionController extends Controller
         $companyId = $project->company_id;
         $booking = $project->bookings()->findOrFail($validated['booking_id']);
 
-        $isTaxable = ($validated['voucher_type'] === 'money_receipt');
+        $bookingAmount = (float)($booking->final_booking_value > 0 ? $booking->final_booking_value : $booking->total_booking_value);
+        if ($bookingAmount > 0 && (float)$validated['amount'] > $bookingAmount) {
+            return redirect()->back()
+                ->withErrors(['amount' => "The transaction amount (₹" . number_format($validated['amount'], 2) . ") cannot be greater than the booking amount (₹" . number_format($bookingAmount, 2) . ")."])
+                ->withInput();
+        }
+
         $isPayment = ($validated['voucher_type'] === 'payment_voucher');
+        $paymentCategory = $validated['payment_category'] ?? null;
+        if ($validated['voucher_type'] === 'money_receipt') {
+            $paymentCategory = 'taxable';
+            $isTaxable = true;
+        } elseif ($validated['voucher_type'] === 'receipt_voucher') {
+            $paymentCategory = 'non_taxable';
+            $isTaxable = false;
+        } elseif ($isPayment) {
+            $isTaxable = ($paymentCategory === 'taxable');
+        } else {
+            $isTaxable = true;
+        }
+
         $entitySequence = $isPayment ? 'payment' : 'receipt';
         $transactionCode = $this->autoNumberService->getNextNumber($entitySequence, $companyId, true);
 
@@ -179,9 +220,11 @@ class TransactionController extends Controller
             'booking_id'             => $booking->id,
             'bank_account_id'        => $validated['bank_account_id'] ?? null,
             'transaction_code'       => $transactionCode,
+            'voucher_no'             => $validated['voucher_no'] ?? null,
             'voucher_date'           => $validated['voucher_date'],
             'voucher_category'       => $voucherCategory,
             'voucher_type'           => $validated['voucher_type'],
+            'payment_category'       => $paymentCategory,
             'transaction_mode'       => $validated['transaction_mode'],
             'source_of_payment'      => $validated['source_of_payment'],
             'amount'                 => (float)$validated['amount'],
@@ -200,7 +243,7 @@ class TransactionController extends Controller
             $loan = $booking->bankFinance;
             if ($loan) {
                 $loan->disbursed_amount = round((float)$loan->disbursed_amount + (float)$validated['amount'], 2);
-                if ($loan->finance_status === 'applied' || $loan->finance_status === 'not_applicable') {
+                if (in_array($loan->finance_status, ['applied', 'not_applicable', 'sanctioned'])) {
                     $loan->finance_status = 'disbursed';
                 }
                 $loan->save();
@@ -247,6 +290,229 @@ class TransactionController extends Controller
 
         return redirect()->back()
             ->with('success', "Cheque / Instrument marked as {$statusLabel} for Voucher {$transaction->transaction_code}.");
+    }
+
+    /**
+     * Show the form for editing an existing transaction
+     */
+    public function edit(Project $project, Transaction $transaction): View
+    {
+        abort_unless($transaction->project_id === $project->id, 404);
+
+        $companyId = $project->company_id;
+        $transaction->load(['booking.customizations', 'booking.saleAgreement', 'booking.bankFinance', 'bankAccount']);
+
+        $bookings = $project->bookings()->get();
+        $bankAccounts = BankAccount::where('company_id', $companyId)
+            ->where(function ($q) use ($project) {
+                $q->where('project_id', $project->id)->orWhereNull('project_id');
+            })
+            ->get();
+
+        return view('project.transactions.edit', compact(
+            'project',
+            'transaction',
+            'bookings',
+            'bankAccounts'
+        ));
+    }
+
+    /**
+     * Update an existing transaction record
+     */
+    public function update(Request $request, Project $project, Transaction $transaction): RedirectResponse
+    {
+        abort_unless($transaction->project_id === $project->id, 404);
+
+        $validated = $request->validate([
+            'booking_id'              => ['required', 'exists:bookings,id'],
+            'voucher_type'            => ['required', 'in:money_receipt,receipt_voucher,payment_voucher,adjustment_voucher'],
+            'payment_category'        => ['nullable', 'required_if:voucher_type,payment_voucher', 'in:taxable,non_taxable'],
+            'voucher_no'              => ['nullable', 'string', 'max:100'],
+            'voucher_date'            => ['required', 'date'],
+            'transaction_mode'        => ['required', 'in:cash,cheque,neft,rtgs,dd,upi,bank_transfer'],
+            'source_of_payment'       => ['required', 'in:self,through_loan_account'],
+            'amount'                  => ['required', 'numeric', 'min:0.01'],
+            'bank_account_id'         => ['nullable', 'exists:bank_accounts,id'],
+            'instrument_ref_no'       => ['nullable', 'string', 'max:100'],
+            'instrument_date'         => ['nullable', 'date'],
+            'issuing_bank'            => ['nullable', 'string', 'max:150'],
+            'issuing_branch'          => ['nullable', 'string', 'max:150'],
+            'instrument_status'       => ['nullable', 'in:cleared,pending_clearance,dishonored,not_applicable'],
+            'particulars'             => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $prevBooking = $transaction->booking;
+        $prevSource = $transaction->source_of_payment;
+        $prevCategory = $transaction->voucher_category;
+
+        $booking = $project->bookings()->findOrFail($validated['booking_id']);
+
+        $bookingAmount = (float)($booking->final_booking_value > 0 ? $booking->final_booking_value : $booking->total_booking_value);
+        if ($bookingAmount > 0 && (float)$validated['amount'] > $bookingAmount) {
+            return redirect()->back()
+                ->withErrors(['amount' => "The transaction amount (₹" . number_format($validated['amount'], 2) . ") cannot be greater than the booking amount (₹" . number_format($bookingAmount, 2) . ")."])
+                ->withInput();
+        }
+
+        $isPayment = ($validated['voucher_type'] === 'payment_voucher');
+        $paymentCategory = $validated['payment_category'] ?? null;
+        if ($validated['voucher_type'] === 'money_receipt') {
+            $paymentCategory = 'taxable';
+            $isTaxable = true;
+        } elseif ($validated['voucher_type'] === 'receipt_voucher') {
+            $paymentCategory = 'non_taxable';
+            $isTaxable = false;
+        } elseif ($isPayment) {
+            $isTaxable = ($paymentCategory === 'taxable');
+        } else {
+            $isTaxable = true;
+        }
+
+        // Determine instrument status
+        $instrumentStatus = $validated['instrument_status'] ?? $transaction->instrument_status;
+        if ($validated['transaction_mode'] === 'cash') {
+            $instrumentStatus = 'not_applicable';
+            $validated['bank_account_id'] = null;
+        } elseif (in_array($validated['transaction_mode'], ['cheque', 'dd']) && empty($validated['instrument_status'])) {
+            $instrumentStatus = 'pending_clearance';
+        } elseif (empty($instrumentStatus) || $instrumentStatus === 'not_applicable') {
+            $instrumentStatus = 'cleared';
+        }
+
+        $voucherCategory = 'receipt';
+        if ($isPayment) {
+            $voucherCategory = 'payment_refund';
+        } elseif ($validated['voucher_type'] === 'adjustment_voucher') {
+            $voucherCategory = 'adjustment';
+        }
+
+        $transaction->update([
+            'booking_id'             => $booking->id,
+            'bank_account_id'        => $validated['bank_account_id'] ?? null,
+            'voucher_no'             => $validated['voucher_no'] ?? null,
+            'voucher_date'           => $validated['voucher_date'],
+            'voucher_category'       => $voucherCategory,
+            'voucher_type'           => $validated['voucher_type'],
+            'payment_category'       => $paymentCategory,
+            'transaction_mode'       => $validated['transaction_mode'],
+            'source_of_payment'      => $validated['source_of_payment'],
+            'amount'                 => (float)$validated['amount'],
+            'instrument_ref_no'      => $validated['instrument_ref_no'] ?? null,
+            'instrument_date'        => $validated['instrument_date'] ?? null,
+            'issuing_bank'           => $validated['issuing_bank'] ?? null,
+            'issuing_branch'         => $validated['issuing_branch'] ?? null,
+            'instrument_status'      => $instrumentStatus,
+            'is_taxable_transaction' => $isTaxable,
+            'particulars'            => $validated['particulars'] ?? null,
+        ]);
+
+        // Synchronize loan disbursed amount if through loan account involved
+        if ($prevSource === 'through_loan_account' || $validated['source_of_payment'] === 'through_loan_account') {
+            $this->syncLoanDisbursement($booking);
+            if ($prevBooking && $prevBooking->id !== $booking->id) {
+                $this->syncLoanDisbursement($prevBooking);
+            }
+        }
+
+        // Synchronize cancellation refund tracking if payment refund involved
+        if ($prevCategory === 'payment_refund' || $voucherCategory === 'payment_refund') {
+            $this->syncCancellationRefunds($booking);
+            if ($prevBooking && $prevBooking->id !== $booking->id) {
+                $this->syncCancellationRefunds($prevBooking);
+            }
+        }
+
+        return redirect()->route('project.transactions.index', $project->id)
+            ->with('success', "Transaction voucher {$transaction->transaction_code} updated successfully!");
+    }
+
+    /**
+     * Delete an existing transaction record
+     */
+    public function destroy(Project $project, Transaction $transaction): RedirectResponse
+    {
+        abort_unless($transaction->project_id === $project->id, 404);
+
+        $booking = $transaction->booking;
+        $txCode = $transaction->transaction_code;
+        $isLoan = ($transaction->source_of_payment === 'through_loan_account');
+        $isRefund = ($transaction->voucher_category === 'payment_refund');
+
+        $transaction->delete();
+
+        if ($booking) {
+            if ($isLoan) {
+                $this->syncLoanDisbursement($booking);
+            }
+            if ($isRefund) {
+                $this->syncCancellationRefunds($booking);
+            }
+        }
+
+        return redirect()->route('project.transactions.index', $project->id)
+            ->with('success', "Transaction voucher {$txCode} has been permanently deleted.");
+    }
+
+    /**
+     * Helper to keep loan disbursed amount synchronized
+     */
+    protected function syncLoanDisbursement(Booking $booking): void
+    {
+        $loan = $booking->bankFinance;
+        if ($loan) {
+            $loan->disbursed_amount = $booking->loan_received;
+            if ($loan->disbursed_amount > 0 && in_array($loan->finance_status, ['applied', 'not_applicable', 'sanctioned'])) {
+                $loan->finance_status = 'disbursed';
+            } elseif ($loan->disbursed_amount <= 0 && $loan->finance_status === 'disbursed') {
+                $loan->finance_status = $loan->sanctioned_amount > 0 ? 'sanctioned' : 'applied';
+            }
+            $loan->save();
+        }
+    }
+
+    /**
+     * Helper to keep cancellation refund tracking rows synchronized
+     */
+    protected function syncCancellationRefunds(Booking $booking): void
+    {
+        $refund = $booking->cancellationRefund;
+        if ($refund) {
+            $refundTxs = $booking->transactions()->where('voucher_category', 'payment_refund')->get();
+            $bankLoan = 0; $partyTax = 0; $partyCash = 0;
+            foreach ($refundTxs as $tx) {
+                $p = strtolower($tx->particulars ?? '');
+                if (str_contains($p, 'bank_loan') || str_contains($p, 'bank loan') || str_contains($p, 'loan a/c')) {
+                    $bankLoan += (float)$tx->amount;
+                } elseif ($tx->payment_category === 'taxable' || str_contains($p, 'party_taxable') || str_contains($p, 'party taxable') || str_contains($p, 'taxable')) {
+                    $partyTax += (float)$tx->amount;
+                } elseif ($tx->payment_category === 'non_taxable' || str_contains($p, 'party_cash') || str_contains($p, 'party cash') || str_contains($p, 'cash')) {
+                    $partyCash += (float)$tx->amount;
+                } else {
+                    if ($tx->is_taxable_transaction) {
+                        $partyTax += (float)$tx->amount;
+                    } else {
+                        $partyCash += (float)$tx->amount;
+                    }
+                }
+            }
+
+            $refund->refunded_to_bank_loan = round($bankLoan, 2);
+            $refund->refunded_to_party_taxable = round($partyTax, 2);
+            $refund->refunded_to_party_cash = round($partyCash, 2);
+
+            $totalRefunded = $bankLoan + $partyTax + $partyCash;
+            $totalRefundable = (float)$refund->refundable_to_bank_loan + (float)$refund->refundable_to_party_taxable + (float)$refund->refundable_to_party_cash;
+
+            if ($totalRefundable > 0 && $totalRefunded >= $totalRefundable) {
+                $refund->status = 'completed';
+            } elseif ($totalRefunded > 0) {
+                $refund->status = 'partially_refunded';
+            } else {
+                $refund->status = 'pending';
+            }
+            $refund->save();
+        }
     }
 
     /**

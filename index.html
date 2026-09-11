@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>NEON ARENA — PS5 Gaming Cafe</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        neon: '#00f5ff',
+                        purple: '#8b5cf6',
+                        dark: '#070711',
+                        card: '#11111d'
+                    },
+                    boxShadow: {
+                        neon: '0 0 25px rgba(0,245,255,.25)',
+                        purple: '0 0 25px rgba(139,92,246,.25)'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at 10% 10%, rgba(0,245,255,.08), transparent 25%),
+                radial-gradient(circle at 90% 20%, rgba(139,92,246,.10), transparent 30%),
+                #070711;
+        }
+
+        .glass {
+            background: rgba(17,17,29,.72);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,.08);
+        }
+
+        .neon-text {
+            text-shadow:
+                0 0 10px rgba(0,245,255,.7),
+                0 0 30px rgba(0,245,255,.3);
+        }
+
+        .purple-text {
+            text-shadow:
+                0 0 10px rgba(139,92,246,.7),
+                0 0 30px rgba(139,92,246,.3);
+        }
+
+        .grid-bg {
+            background-image:
+                linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+            background-size: 45px 45px;
+        }
+
+        .slot {
+            transition: .2s ease;
+        }
+
+        .slot:hover {
+            transform: translateY(-2px);
+        }
+
+        .slot.selected {
+            background: #00f5ff;
+            color: #05050b;
+            box-shadow: 0 0 25px rgba(0,245,255,.4);
+        }
+
+        .slot.booked {
+            opacity: .35;
+            cursor: not-allowed;
+        }
+
+        .game-card {
+            transition: .3s ease;
+        }
+
+        .game-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(0,245,255,.5);
+            box-shadow: 0 15px 40px rgba(0,245,255,.08);
+        }
+
+        .modal {
+            opacity: 0;
+            pointer-events: none;
+            transition: .25s ease;
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .scanline {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(
+                rgba(255,255,255,0) 50%,
+                rgba(255,255,255,.012) 50%
+            );
+            background-size: 100% 4px;
+            z-index: 100;
+        }
+    </style>
+</head>
+
+<body class="text-white min-h-screen grid-bg">
+
+<div class="scanline"></div>
+
+<!-- NAVBAR -->
+<header class="fixed top-0 left-0 right-0 z-50">
+    <nav class="glass border-x-0 border-t-0">
+        <div class="max-w-7xl mx-auto px-5 lg:px-8 h-20 flex items-center justify-between">
+
+            <a href="#" class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-xl bg-neon text-black flex items-center justify-center font-black text-xl shadow-neon">
+                    N
+                </div>
+
+                <div>
+                    <div class="font-black tracking-widest text-lg">
+                        NEON<span class="text-neon">ARENA</span>
+                    </div>
+                    <div class="text-[9px] text-gray-500 tracking-[.35em]">
+                        GAMING LOUNGE
+                    </div>
+                </div>
+            </a>
+
+            <div class="hidden md:flex items-center gap-8 text-sm text-gray-400">
+                <a href="#booking" class="hover:text-neon transition">Book PS5</a>
+                <a href="#games" class="hover:text-neon transition">Games</a>
+                <a href="#pricing" class="hover:text-neon transition">Pricing</a>
+                <a href="#about" class="hover:text-neon transition">About</a>
+            </div>
+
+            <button
+                onclick="scrollToBooking()"
+                class="hidden sm:block bg-neon text-black px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-neon transition">
+                BOOK NOW
+            </button>
+
+            <button class="md:hidden text-2xl">
+                ☰
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+<!-- HERO -->
+<section class="pt-32 pb-20 px-5 relative overflow-hidden">
+
+    <div class="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-neon/10 blur-[120px] rounded-full"></div>
+
+    <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+
+        <div class="relative z-10">
+
+            <div class="inline-flex items-center gap-2 border border-neon/30 bg-neon/5 px-4 py-2 rounded-full text-neon text-xs font-bold tracking-widest mb-7">
+                <span class="w-2 h-2 bg-neon rounded-full animate-pulse"></span>
+                PS5 GAMING CAFE
+            </div>
+
+            <h1 class="text-5xl sm:text-6xl lg:text-7xl font-black leading-[.95] tracking-tight">
+                GAME
+                <span class="text-neon neon-text">HARD.</span>
+                <br>
+                PLAY
+                <span class="text-purple-400 purple-text">LOUD.</span>
+            </h1>
+
+            <p class="mt-7 text-gray-400 text-lg max-w-xl leading-relaxed">
+                Your ultimate PS5 gaming arena. Premium consoles, massive screens,
+                competitive multiplayer and an atmosphere built for gamers.
+            </p>
+
+            <div class="flex flex-wrap gap-4 mt-9">
+
+                <button
+                    onclick="scrollToBooking()"
+                    class="bg-neon text-black px-7 py-4 rounded-xl font-black hover:shadow-neon transition">
+                    🎮 BOOK YOUR SESSION
+                </button>
+
+                <a
+                    href="#pricing"
+                    class="border border-white/10 bg-white/5 px-7 py-4 rounded-xl font-bold hover:bg-white/10 transition">
+                    VIEW PRICES
+                </a>
+
+            </div>
+
+            <div class="flex gap-8 mt-10 text-sm">
+
+                <div>
+                    <div class="font-black text-2xl">12+</div>
+                    <div class="text-gray-500">PS5 Stations</div>
+                </div>
+
+                <div>
+                    <div class="font-black text-2xl">4K</div>
+                    <div class="text-gray-500">Gaming Displays</div>
+                </div>
+
+                <div>
+                    <div class="font-black text-2xl">120Hz</div>
+                    <div class="text-gray-500">High Refresh Rate</div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- HERO GAMING CARD -->
+        <div class="relative">
+
+            <div class="absolute -inset-5 bg-neon/10 blur-3xl rounded-full"></div>
+
+            <div class="relative glass rounded-3xl overflow-hidden border-white/10">
+
+                <div class="h-[420px] bg-gradient-to-br from-indigo-950 via-purple-950 to-black relative overflow-hidden">
+
+                    <div class="absolute inset-0 opacity-40"
+                         style="background-image:url('https://images.unsplash.com/photo-1603481546238-487240415921?auto=format&fit=crop&w=1200&q=80');background-size:cover;background-position:center;">
+                    </div>
+
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
+
+                    <div class="absolute top-5 left-5 flex gap-2">
+                        <span class="px-3 py-1.5 bg-green-500/20 border border-green-400/30 rounded-full text-green-300 text-xs font-bold">
+                            ● LIVE
+                        </span>
+                    </div>
+
+                    <div class="absolute bottom-7 left-7 right-7">
+
+                        <div class="text-xs text-neon font-bold tracking-widest">
+                            TONIGHT'S FEATURE
+                        </div>
+
+                        <h2 class="text-4xl font-black mt-2">
+                            FIFA / FC 26
+                        </h2>
+
+                        <p class="text-gray-300 mt-2">
+                            Challenge your friends. Own the arena.
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="p-5 flex items-center justify-between">
+
+                    <div>
+                        <div class="text-xs text-gray-500">STARTING FROM</div>
+                        <div class="text-2xl font-black">
+                            ₹99 <span class="text-sm text-gray-500">/ hour</span>
+                        </div>
+                    </div>
+
+                    <button
+                        onclick="scrollToBooking()"
+                        class="px-5 py-3 bg-white/10 rounded-xl font-bold hover:bg-neon hover:text-black transition">
+                        Reserve →
+                    </button>
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</section>
+
+
+<!-- LIVE STATUS -->
+<section class="px-5 pb-10">
+
+    <div class="max-w-7xl mx-auto glass rounded-2xl p-5">
+
+        <div class="grid md:grid-cols-3 gap-6 items-center">
+
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 text-xl">
+                    ●
+                </div>
+                <div>
+                    <div class="font-bold">Arena Status</div>
+                    <div class="text-sm text-green-400">Open • 10:00 AM – 2:00 AM</div>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <div class="text-xs text-gray-500 tracking-widest">
+                    CURRENTLY AVAILABLE
+                </div>
+                <div class="text-3xl font-black text-neon">
+                    7 / 12
+                </div>
+                <div class="text-xs text-gray-500">
+                    PS5 stations free
+                </div>
+            </div>
+
+            <div class="md:text-right">
+                <span class="inline-flex px-4 py-2 bg-purple-500/10 border border-purple-500/20 text-purple-300 rounded-xl text-sm font-bold">
+                    ⚡ Walk-ins Welcome
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- BOOKING -->
+<section id="booking" class="py-20 px-5">
+
+    <div class="max-w-7xl mx-auto">
+
+        <div class="text-center mb-12">
+            <div class="text-neon text-xs font-bold tracking-[.3em]">
+                RESERVE YOUR STATION
+            </div>
+
+            <h2 class="text-4xl md:text-5xl font-black mt-3">
+                BOOK YOUR <span class="text-neon">SESSION</span>
+            </h2>
+
+            <p class="text-gray-500 mt-4">
+                Pick your date, time and gaming setup.
+            </p>
+        </div>
+
+
+        <div class="glass rounded-3xl p-6 md:p-8">
+
+            <!-- STEP 1 -->
+
+            <div class="flex items-center gap-3 mb-7">
+                <div class="w-9 h-9 rounded-full bg-neon text-black flex items-center justify-center font-black">
+                    1
+                </div>
+
+                <div>
+                    <h3 class="font-bold">Choose Date</h3>
+                    <p class="text-xs text-gray-500">Select your gaming day</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 md:grid-cols-7 gap-3 mb-10">
+
+                <button class="date-btn border border-neon bg-neon text-black rounded-xl p-4">
+                    <div class="text-xs">TODAY</div>
+                    <div class="text-xl font-black">09</div>
+                    <div class="text-xs">SEP</div>
+                </button>
+
+                <button class="date-btn border border-white/10 bg-white/5 rounded-xl p-4 hover:border-neon/50">
+                    <div class="text-xs text-gray-500">THU</div>
+                    <div class="text-xl font-black">10</div>
+                    <div class="text-xs text-gray-500">SEP</div>
+                </button>
+
+                <button class="date-btn border border-white/10 bg-white/5 rounded-xl p-4 hover:border-neon/50">
+                    <div class="text-xs text-gray-500">FRI</div>
+                    <div class="text-xl font-black">11</div>
+                    <div class="text-xs text-gray-500">SEP</div>
+                </button>
+
+                <button class="date-btn border border-white/10 bg-white/5 rounded-xl p-4 hover:border-neon/50">
+                    <div class="text-xs text-gray-500">SAT</div>
+                    <div class="text-xl font-black">12</div>
+                    <div class="text-xs text-gray-500">SEP</div>
+                </button>
+
+                <button class="date-btn border border-white/10 bg-white/5 rounded-xl p-4 hover:border-neon/50">
+                    <div class="text-xs text-gray-500">SUN</div>
+                    <div class="text-xl font-black">13</div>
+                    <div class="text-xs text-gray-500">SEP</div>
+                </button>
+
+                <button class="date-btn border border-white/10 bg-white/5 rounded-xl p-4 hover:border-neon/50">
+                    <div class="text-xs text-gray-500">MON</div>
+                    <div class="text-xl font-black">14</div>
+                    <div class="text-xs text-gray-500">SEP</div>
+                </button>
+
+                <button class="date-btn border border-white/10 bg-white/5 rounded-xl p-4 hover:border-neon/50">
+                    <div class="text-xs text-gray-500">TUE</div>
+                    <div class="text-xl font-black">15</div>
+                    <div class="text-xs text-gray-500">SEP</div>
+                </button>
+
+            </div>
+
+
+            <!-- STEP 2 -->
+
+            <div class="flex items-center gap-3 mb-7">
+                <div class="w-9 h-9 rounded-full bg-neon text-black flex items-center justify-center font-black">
+                    2
+                </div>
+
+                <div>
+                    <h3 class="font-bold">Choose Time</h3>
+                    <p class="text-xs text-gray-500">Available slots for today</p>
+                </div>
+            </div>
+
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+
+                <button class="slot border border-white/10 bg-white/5 rounded-xl py-4 font-bold">
+                    10:00 AM
+                </button>
+
+                <button class="slot border border-white/10 bg-white/5 rounded-xl py-4 font-bold">
+                    11:00 AM
+                </button>
+
+                <button class="slot booked border border-white/10 bg-white/5 rounded-xl py-4 font-bold">
+                    12:00 PM
+                    <span class="block text-[10px] text-red-400">BOOKED</span>
+                </button>
+
+                <button class="slot border border-white/10 bg-white/5 rounded-xl py-4 font-bold">
+                    01:00 PM
+                </button>
+
+                <button class="slot border border-white/10 bg-white/5 rounded-xl py-4 font-bold">
+                    02:00 PM
+                </button>
+
+                <button class="slot border border-white/10 bg-white/5 rounded-xl py-4 font-bold">
+                    03:00 PM
+                </button>
+
+                <button class="slot border border-white/10 bg-white/5 rounded-xl py-4 font-bold">
+                    04:00 PM
+                </button>
+
+                <button class="slot booked border border-white/10 bg-white/5 rounded-xl py-4 font-bold">
+                    05:00 PM
+                    <span class="block text-[10px] text-red-400">BOOKED</span>
+                </button>
+
+                <button class="slot border border-white/10 bg-white/5 rounded-xl py-4 font-bold">
+                    06:00 PM
+                </button>
+
+                <button class="slot border border-white/10 bg-white/5 rounded-xl py-4 font-bold">
+                    07:00 PM
+                </button>
+
+                <button class="slot border border-white/10 bg-white/5 rounded-xl py-4 font-bold">
+                    08:00 PM
+                </button>
+
+                <button class="slot border border-white/10 bg-white/5 rounded-xl py-4 font-bold">
+                    09:00 PM
+                </button>
+
+            </div>
+
+
+            <!-- STEP 3 -->
+
+            <div class="flex items-center gap-3 mt-12 mb-7">
+
+                <div class="w-9 h-9 rounded-full bg-neon text-black flex items-center justify-center font-black">
+                    3
+                </div>
+
+                <div>
+                    <h3 class="font-bold">Choose Setup</h3>
+                    <p class="text-xs text-gray-500">Pick your preferred gaming experience</p>
+                </div>
+
+            </div>
+
+
+            <div class="grid md:grid-cols-3 gap-4">
+
+                <button class="setup-card text-left border border-neon bg-neon/5 rounded-2xl p-5">
+                    <div class="text-2xl mb-3">🎮</div>
+                    <div class="font-black">SOLO STATION</div>
+                    <div class="text-sm text-gray-500 mt-1">
+                        1 PS5 • 1 Player
+                    </div>
+                    <div class="text-neon font-black mt-3">
+                        ₹99 / hour
+                    </div>
+                </button>
+
+                <button class="setup-card text-left border border-white/10 bg-white/5 rounded-2xl p-5 hover:border-neon/50">
+                    <div class="text-2xl mb-3">⚔️</div>
+                    <div class="font-black">DUO BATTLE</div>
+                    <div class="text-sm text-gray-500 mt-1">
+                        1 PS5 • 2 Players
+                    </div>
+                    <div class="text-neon font-black mt-3">
+                        ₹149 / hour
+                    </div>
+                </button>
+
+                <button class="setup-card text-left border border-white/10 bg-white/5 rounded-2xl p-5 hover:border-neon/50">
+                    <div class="text-2xl mb-3">👑</div>
+                    <div class="font-black">VIP BOOTH</div>
+                    <div class="text-sm text-gray-500 mt-1">
+                        PS5 • 4K • Premium Seat
+                    </div>
+                    <div class="text-neon font-black mt-3">
+                        ₹249 / hour
+                    </div>
+                </button>
+
+            </div>
+
+
+            <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-between items-center border-t border-white/10 pt-7">
+
+                <div>
+                    <div class="text-xs text-gray-500">SELECTED SESSION</div>
+                    <div id="selectionText" class="font-bold mt-1">
+                        Today • Select a time
+                    </div>
+                </div>
+
+                <button
+                    onclick="openBooking()"
+                    class="w-full sm:w-auto bg-neon text-black px-8 py-4 rounded-xl font-black hover:shadow-neon transition">
+                    CONTINUE BOOKING →
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- GAMES -->
+<section id="games" class="py-20 px-5 bg-black/20">
+
+    <div class="max-w-7xl mx-auto">
+
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-10">
+
+            <div>
+                <div class="text-neon text-xs font-bold tracking-[.3em]">
+                    READY TO PLAY
+                </div>
+
+                <h2 class="text-4xl md:text-5xl font-black mt-3">
+                    OUR <span class="text-purple-400">ARSENAL</span>
+                </h2>
+            </div>
+
+            <p class="text-gray-500 max-w-md mt-4 md:mt-0">
+                From competitive shooters to couch multiplayer chaos —
+                we've got your favorite games ready.
+            </p>
+
+        </div>
+
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+
+            <div class="game-card glass rounded-2xl overflow-hidden">
+
+                <div class="h-60 bg-cover bg-center"
+                     style="background-image:url('https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=700&q=80')">
+                </div>
+
+                <div class="p-5">
+                    <div class="text-xs text-neon font-bold">SPORTS</div>
+                    <h3 class="font-black text-xl mt-1">EA SPORTS FC 26</h3>
+                    <p class="text-sm text-gray-500 mt-2">1–4 Players</p>
+                </div>
+
+            </div>
+
+
+            <div class="game-card glass rounded-2xl overflow-hidden">
+
+                <div class="h-60 bg-cover bg-center"
+                     style="background-image:url('https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=700&q=80')">
+                </div>
+
+                <div class="p-5">
+                    <div class="text-xs text-purple-400 font-bold">ACTION</div>
+                    <h3 class="font-black text-xl mt-1">GTA V</h3>
+                    <p class="text-sm text-gray-500 mt-2">1 Player</p>
+                </div>
+
+            </div>
+
+
+            <div class="game-card glass rounded-2xl overflow-hidden">
+
+                <div class="h-60 bg-cover bg-center"
+                     style="background-image:url('https://images.unsplash.com/photo-1560419015-7c427e8ae5ba?auto=format&fit=crop&w=700&q=80')">
+                </div>
+
+                <div class="p-5">
+                    <div class="text-xs text-neon font-bold">FIGHTING</div>
+                    <h3 class="font-black text-xl mt-1">TEKKEN 8</h3>
+                    <p class="text-sm text-gray-500 mt-2">1–2 Players</p>
+                </div>
+
+            </div>
+
+
+            <div class="game-card glass rounded-2xl overflow-hidden">
+
+                <div class="h-60 bg-cover bg-center"
+                     style="background-image:url('https://images.unsplash.com/photo-1605870445919-838d190e8e1b?auto=format&fit=crop&w=700&q=80')">
+                </div>
+
+                <div class="p-5">
+                    <div class="text-xs text-purple-400 font-bold">RACING</div>
+                    <h3 class="font-black text-xl mt-1">GRAN TURISMO</h3>
+                    <p class="text-sm text-gray-500 mt-2">1–2 Players</p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- PRICING -->
+<section id="pricing" class="py-20 px-5">
+
+    <div class="max-w-7xl mx-auto">
+
+        <div class="text-center mb-12">
+
+            <div class="text-neon text-xs font-bold tracking-[.3em]">
+                SIMPLE PRICING
+            </div>
+
+            <h2 class="text-4xl md:text-5xl font-black mt-3">
+                PICK YOUR <span class="text-neon">LOADOUT</span>
+            </h2>
+
+        </div>
+
+
+        <div class="grid md:grid-cols-3 gap-6">
+
+            <!-- PLAN -->
+            <div class="glass rounded-3xl p-7">
+
+                <div class="text-gray-400 text-sm font-bold">
+                    SOLO
+                </div>
+
+                <div class="text-5xl font-black mt-3">
+                    ₹99
+                    <span class="text-sm text-gray-500">/hr</span>
+                </div>
+
+                <p class="text-gray-500 mt-3">
+                    Perfect for grinding ranked or finishing your campaign.
+                </p>
+
+                <div class="space-y-3 mt-7 text-sm text-gray-300">
+                    <div>✓ PS5 Console</div>
+                    <div>✓ 4K Display</div>
+                    <div>✓ Gaming Headset</div>
+                    <div>✓ Controller</div>
+                </div>
+
+                <button
+                    onclick="scrollToBooking()"
+                    class="w-full mt-8 py-3 rounded-xl bg-white/10 font-bold hover:bg-neon hover:text-black transition">
+                    CHOOSE SOLO
+                </button>
+
+            </div>
+
+
+            <!-- POPULAR -->
+            <div class="relative rounded-3xl p-[1px] bg-gradient-to-b from-neon to-purple-500">
+
+                <div class="glass rounded-3xl p-7 h-full">
+
+                    <div class="flex justify-between">
+
+                        <div class="text-neon text-sm font-black">
+                            DUO
+                        </div>
+
+                        <span class="text-[10px] px-2 py-1 bg-neon text-black rounded-full font-black">
+                            POPULAR
+                        </span>
+
+                    </div>
+
+                    <div class="text-5xl font-black mt-3">
+                        ₹149
+                        <span class="text-sm text-gray-500">/hr</span>
+                    </div>
+
+                    <p class="text-gray-500 mt-3">
+                        Bring your best friend and settle the score.
+                    </p>
+
+                    <div class="space-y-3 mt-7 text-sm text-gray-300">
+                        <div>✓ Everything in Solo</div>
+                        <div>✓ 2 Controllers</div>
+                        <div>✓ 2 Players</div>
+                        <div>✓ Snacks & Water</div>
+                    </div>
+
+                    <button
+                        onclick="scrollToBooking()"
+                        class="w-full mt-8 py-3 rounded-xl bg-neon text-black font-black hover:shadow-neon transition">
+                        CHOOSE DUO
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- VIP -->
+            <div class="glass rounded-3xl p-7">
+
+                <div class="text-purple-400 text-sm font-bold">
+                    VIP
+                </div>
+
+                <div class="text-5xl font-black mt-3">
+                    ₹249
+                    <span class="text-sm text-gray-500">/hr</span>
+                </div>
+
+                <p class="text-gray-500 mt-3">
+                    Premium private booth for the ultimate gaming session.
+                </p>
+
+                <div class="space-y-3 mt-7 text-sm text-gray-300">
+                    <div>✓ Private Gaming Booth</div>
+                    <div>✓ 4K 120Hz Display</div>
+                    <div>✓ Premium Headset</div>
+                    <div>✓ Up to 4 Players</div>
+                </div>
+
+                <button
+                    onclick="scrollToBooking()"
+                    class="w-full mt-8 py-3 rounded-xl bg-white/10 font-bold hover:bg-purple-500 hover:text-white transition">
+                    CHOOSE VIP
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- FEATURES -->
+<section id="about" class="py-20 px-5 bg-black/20">
+
+    <div class="max-w-7xl mx-auto">
+
+        <div class="grid md:grid-cols-4 gap-5">
+
+            <div class="glass rounded-2xl p-6">
+                <div class="text-3xl">⚡</div>
+                <h3 class="font-black mt-5">120Hz Gaming</h3>
+                <p class="text-sm text-gray-500 mt-2">
+                    Smooth gameplay with high-refresh displays.
+                </p>
+            </div>
+
+            <div class="glass rounded-2xl p-6">
+                <div class="text-3xl">🎧</div>
+                <h3 class="font-black mt-5">Pro Audio</h3>
+                <p class="text-sm text-gray-500 mt-2">
+                    Gaming headsets for immersive sound.
+                </p>
+            </div>
+
+            <div class="glass rounded-2xl p-6">
+                <div class="text-3xl">🏆</div>
+                <h3 class="font-black mt-5">Tournaments</h3>
+                <p class="text-sm text-gray-500 mt-2">
+                    Regular FIFA, Tekken and multiplayer tournaments.
+                </p>
+            </div>
+
+            <div class="glass rounded-2xl p-6">
+                <div class="text-3xl">🍕</div>
+                <h3 class="font-black mt-5">Snacks & Drinks</h3>
+                <p class="text-sm text-gray-500 mt-2">
+                    Fuel your gaming session without leaving the arena.
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- FOOTER -->
+<footer class="border-t border-white/10 py-10 px-5">
+
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-6">
+
+        <div>
+            <div class="font-black tracking-widest text-lg">
+                NEON<span class="text-neon">ARENA</span>
+            </div>
+
+            <p class="text-gray-600 text-sm mt-2">
+                Level up your gaming experience.
+            </p>
+        </div>
+
+        <div class="text-gray-500 text-sm">
+            © 2026 Neon Arena Gaming Lounge
+        </div>
+
+        <div class="flex gap-5 text-gray-500">
+            <a href="#" class="hover:text-neon">Instagram</a>
+            <a href="#" class="hover:text-neon">Discord</a>
+            <a href="#" class="hover:text-neon">WhatsApp</a>
+        </div>
+
+    </div>
+
+</footer>
+
+
+<!-- BOOKING MODAL -->
+<div id="bookingModal" class="modal fixed inset-0 z-[200] flex items-center justify-center p-5">
+
+    <div
+        onclick="closeBooking()"
+        class="absolute inset-0 bg-black/80 backdrop-blur-sm">
+    </div>
+
+    <div class="relative glass rounded-3xl w-full max-w-lg p-7 shadow-neon">
+
+        <button
+            onclick="closeBooking()"
+            class="absolute right-5 top-5 text-gray-500 hover:text-white text-xl">
+            ✕
+        </button>
+
+        <div class="text-neon text-xs font-bold tracking-[.3em]">
+            FINAL STEP
+        </div>
+
+        <h2 class="text-3xl font-black mt-2">
+            COMPLETE <span class="text-neon">BOOKING</span>
+        </h2>
+
+        <p class="text-gray-500 text-sm mt-2">
+            Enter your details and we'll reserve your station.
+        </p>
+
+
+        <div class="mt-7 space-y-4">
+
+            <div>
+                <label class="text-xs text-gray-500">
+                    YOUR NAME
+                </label>
+
+                <input
+                    type="text"
+                    placeholder="Enter your name"
+                    class="w-full mt-2 bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-neon">
+            </div>
+
+            <div>
+                <label class="text-xs text-gray-500">
+                    PHONE NUMBER
+                </label>
+
+                <input
+                    type="tel"
+                    placeholder="+91 XXXXX XXXXX"
+                    class="w-full mt-2 bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-neon">
+            </div>
+
+
+            <div class="grid grid-cols-2 gap-4">
+
+                <div>
+                    <label class="text-xs text-gray-500">
+                        SESSION
+                    </label>
+
+                    <select
+                        class="w-full mt-2 bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none">
+                        <option>Solo — ₹99/hr</option>
+                        <option>Duo — ₹149/hr</option>
+                        <option>VIP — ₹249/hr</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-xs text-gray-500">
+                        DURATION
+                    </label>
+
+                    <select
+                        class="w-full mt-2 bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none">
+                        <option>1 Hour</option>
+                        <option>2 Hours</option>
+                        <option>3 Hours</option>
+                    </select>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="mt-7 p-4 rounded-xl bg-neon/5 border border-neon/20">
+
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Booking</span>
+                <span>Today • <span id="modalTime">Select time</span></span>
+            </div>
+
+            <div class="flex justify-between mt-3 font-black">
+                <span>Total</span>
+                <span class="text-neon">₹99</span>
+            </div>
+
+        </div>
+
+
+        <button
+            onclick="confirmBooking()"
+            class="w-full mt-5 bg-neon text-black py-4 rounded-xl font-black hover:shadow-neon transition">
+            CONFIRM & RESERVE 🎮
+        </button>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    // Scroll to booking section
+    function scrollToBooking() {
+        document.getElementById('booking').scrollIntoView({
+            behavior: 'smooth'
+        });
+    }
+
+
+    // Date selection
+    const dateButtons = document.querySelectorAll('.date-btn');
+
+    dateButtons.forEach(button => {
+
+        button.addEventListener('click', () => {
+
+            dateButtons.forEach(btn => {
+                btn.classList.remove(
+                    'bg-neon',
+                    'text-black',
+                    'border-neon'
+                );
+
+                btn.classList.add(
+                    'bg-white/5',
+                    'border-white/10'
+                );
+            });
+
+            button.classList.remove(
+                'bg-white/5',
+                'border-white/10'
+            );
+
+            button.classList.add(
+                'bg-neon',
+                'text-black',
+                'border-neon'
+            );
+
+        });
+
+    });
+
+
+    // Time selection
+    const slots = document.querySelectorAll('.slot:not(.booked)');
+    const selectionText = document.getElementById('selectionText');
+    const modalTime = document.getElementById('modalTime');
+
+    slots.forEach(slot => {
+
+        slot.addEventListener('click', () => {
+
+            slots.forEach(s => s.classList.remove('selected'));
+
+            slot.classList.add('selected');
+
+            const time = slot.innerText.trim();
+
+            selectionText.innerText =
+                'Today • ' + time;
+
+            modalTime.innerText = time;
+
+        });
+
+    });
+
+
+    // Setup selection
+    const setupCards = document.querySelectorAll('.setup-card');
+
+    setupCards.forEach(card => {
+
+        card.addEventListener('click', () => {
+
+            setupCards.forEach(c => {
+                c.classList.remove(
+                    'border-neon',
+                    'bg-neon/5'
+                );
+
+                c.classList.add(
+                    'border-white/10',
+                    'bg-white/5'
+                );
+            });
+
+            card.classList.remove(
+                'border-white/10',
+                'bg-white/5'
+            );
+
+            card.classList.add(
+                'border-neon',
+                'bg-neon/5'
+            );
+
+        });
+
+    });
+
+
+    // Modal
+    function openBooking() {
+
+        const selected = document.querySelector('.slot.selected');
+
+        if (!selected) {
+            alert('Please select a time slot first 🎮');
+            return;
+        }
+
+        document
+            .getElementById('bookingModal')
+            .classList.add('active');
+
+    }
+
+
+    function closeBooking() {
+
+        document
+            .getElementById('bookingModal')
+            .classList.remove('active');
+
+    }
+
+
+    function confirmBooking() {
+
+        const name = document.querySelector(
+            '#bookingModal input[type="text"]'
+        ).value;
+
+        const phone = document.querySelector(
+            '#bookingModal input[type="tel"]'
+        ).value;
+
+        if (!name || !phone) {
+            alert('Please enter your name and phone number.');
+            return;
+        }
+
+        alert(
+            '🎮 Booking Confirmed!\n\n' +
+            'Welcome to Neon Arena, ' +
+            name +
+            '!\n\n' +
+            'Your PS5 session has been reserved.'
+        );
+
+        closeBooking();
+
+    }
+
+</script>
+
+</body>
+</html>

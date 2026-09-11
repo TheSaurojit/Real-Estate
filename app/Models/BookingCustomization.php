@@ -10,6 +10,19 @@ class BookingCustomization extends Model
 {
     use HasFactory;
 
+    public const PARTICULARS = [
+        'Civil & Masonry works',
+        'Electrical works',
+        'Plumbing & Sanitation works',
+        'Tile, marble & granite works',
+        'Door, doorframe & windows',
+        'Grills & Railings',
+        'Putty, primer & finishing jobs',
+        'Processing fees, Legal & documentation charges',
+        'Cleaning, demolishing & preparation jobs',
+        'Others',
+    ];
+
     protected $fillable = [
         'booking_id',
         'job_type',
@@ -19,16 +32,20 @@ class BookingCustomization extends Model
         'labour_rate',
         'schedule_rate',
         'quantity',
+        'material_total',
+        'labour_total',
         'unit_measure',
         'job_total',
     ];
 
     protected $casts = [
-        'material_rate' => 'decimal:2',
-        'labour_rate'   => 'decimal:2',
-        'schedule_rate' => 'decimal:2',
-        'quantity'      => 'decimal:2',
-        'job_total'     => 'decimal:2',
+        'material_rate'  => 'decimal:2',
+        'labour_rate'    => 'decimal:2',
+        'schedule_rate'  => 'decimal:2',
+        'quantity'       => 'decimal:2',
+        'material_total' => 'decimal:2',
+        'labour_total'   => 'decimal:2',
+        'job_total'      => 'decimal:2',
     ];
 
     public function booking(): BelongsTo
@@ -41,7 +58,9 @@ class BookingCustomization extends Model
      */
     public function computeTotal(): float
     {
-        $rateSum = (float)$this->material_rate + (float)$this->labour_rate + (float)$this->schedule_rate;
-        return round($rateSum * (float)$this->quantity, 2);
+        $mat = round((float)$this->material_rate * (float)$this->quantity, 2);
+        $lab = round((float)$this->labour_rate * (float)$this->quantity, 2);
+        $sch = round((float)$this->schedule_rate * (float)$this->quantity, 2);
+        return round($mat + $lab + $sch, 2);
     }
 }

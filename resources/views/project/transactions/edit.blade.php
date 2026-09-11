@@ -2,12 +2,13 @@
 
 @section('content')
 <div class="max-w-4xl mx-auto space-y-6" x-data="{
-    voucherType: '{{ old('voucher_type', request('voucher_type', 'money_receipt')) }}',
-    paymentCategory: '{{ old('payment_category', request('payment_category', 'taxable')) }}',
-    txMode: '{{ old('transaction_mode', 'neft') }}',
-    paymentSource: '{{ old('source_of_payment', 'self') }}',
-    enteredAmount: {{ old('amount', 0) }},
-    selectedBookingId: '{{ old('booking_id', $selectedBooking?->id ?? '') }}',
+    voucherType: '{{ old('voucher_type', $transaction->voucher_type) }}',
+    paymentCategory: '{{ old('payment_category', $transaction->payment_category ?? ($transaction->is_taxable_transaction ? 'taxable' : 'non_taxable')) }}',
+    txMode: '{{ old('transaction_mode', $transaction->transaction_mode) }}',
+    paymentSource: '{{ old('source_of_payment', $transaction->source_of_payment) }}',
+    enteredAmount: {{ old('amount', $transaction->amount) }},
+    selectedBookingId: '{{ old('booking_id', $transaction->booking_id) }}',
+    instrumentStatus: '{{ old('instrument_status', $transaction->instrument_status) }}',
 
     bookingsData: {
         @foreach($bookings as $b)
@@ -51,64 +52,84 @@
                 <span>/</span>
                 <a href="{{ route('project.transactions.index', $project->id) }}" class="hover:text-sky-600">Transactions</a>
                 <span>/</span>
-                <span class="text-emerald-600">Record Payment</span>
+                <span class="text-amber-600">Edit Voucher</span>
             </nav>
-            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Record Financial Transaction & Receipt</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Collect Money Receipts (Bank Escrow/Taxable), Receipt Vouchers (Cash), or Payment Refunds.</p>
+            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Edit Transaction & Voucher</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Modify transaction particulars, dates, instruments, or amounts with dual-ledger synchronization.</p>
         </div>
-        <a href="{{ route('project.transactions.index', $project->id) }}" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-semibold transition">
-            <i class="fa-solid fa-arrow-left mr-1"></i> Back to Ledger
-        </a>
+        <div class="flex items-center space-x-2">
+            <a href="{{ route('project.transactions.show', [$project->id, $transaction->id]) }}" class="px-3.5 py-2 bg-slate-900 hover:bg-emerald-600 text-white rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm">
+                <i class="fa-solid fa-print mr-1"></i> View Voucher
+            </a>
+            <a href="{{ route('project.transactions.index', $project->id) }}" class="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-semibold transition">
+                <i class="fa-solid fa-arrow-left mr-1"></i> Back to Ledger
+            </a>
+        </div>
     </div>
 
-    <!-- Payment Collection Form Card -->
+    @if ($errors->any())
+        <div class="p-4 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700">
+            <div class="font-bold flex items-center space-x-2 mb-1">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span>Please fix the following validation errors:</span>
+            </div>
+            <ul class="list-disc list-inside space-y-0.5 text-[11px]">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <!-- Transaction Form Card -->
     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
         
         <!-- Header Banner -->
-        <div class="bg-gradient-to-r from-emerald-700 via-teal-800 to-slate-900 px-6 py-4 text-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="bg-gradient-to-r from-amber-700 via-slate-800 to-slate-900 px-6 py-4 text-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div class="flex items-center space-x-3">
                 <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
-                    <i class="fa-solid fa-money-bill-transfer text-white"></i>
+                    <i class="fa-solid fa-pen-to-square text-white"></i>
                 </div>
                 <div>
-                    <h3 class="font-bold text-sm text-white">PAYMENT COLLECTION / VOUCHER</h3>
-                    <p class="text-[11px] text-emerald-200">Dual-Ledger Reconciliation & Receipt Generator</p>
+                    <h3 class="font-bold text-sm text-white">EDIT TRANSACTION & VOUCHER</h3>
+                    <p class="text-[11px] text-amber-200">Transaction code is immutable to preserve financial audit trail.</p>
                 </div>
             </div>
             <div class="text-left sm:text-right">
-                <span class="text-[10px] text-emerald-200 uppercase tracking-wider block font-semibold">Auto-Generated Code</span>
-                <span class="text-sm font-mono font-bold bg-black/40 px-2.5 py-0.5 rounded border border-emerald-500/40 text-white" x-text="voucherType === 'payment_voucher' ? '{{ $nextPaymentCode }}' : '{{ $nextReceiptCode }}'">
-                    {{ $nextReceiptCode }}
+                <span class="text-[10px] text-amber-200 uppercase tracking-wider block font-semibold">Voucher Code (Immutable)</span>
+                <span class="text-sm font-mono font-bold bg-black/40 px-2.5 py-0.5 rounded border border-amber-500/40 text-amber-300">
+                    {{ $transaction->transaction_code }}
                 </span>
             </div>
         </div>
 
-        <form action="{{ route('project.transactions.store', $project->id) }}" method="POST" class="p-6 sm:p-8 space-y-6">
+        <form action="{{ route('project.transactions.update', [$project->id, $transaction->id]) }}" method="POST" class="p-6 sm:p-8 space-y-6">
             @csrf
+            @method('PUT')
 
             <!-- 1. Booking Selection -->
             <div>
                 <label for="booking_id" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                    Select Customer / Property Booking <span class="text-rose-500">*</span>
+                    Customer / Property Booking <span class="text-rose-500">*</span>
                 </label>
                 <select id="booking_id" name="booking_id" x-model="selectedBookingId" required
                         class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none transition cursor-pointer">
-                    <option value="" disabled selected>-- Select Flat / Customer Booking --</option>
+                    <option value="" disabled>-- Select Flat / Customer Booking --</option>
                     @foreach($bookings as $b)
-                        <option value="{{ $b->id }}" {{ old('booking_id', $selectedBooking?->id) == $b->id ? 'selected' : '' }}>
+                        <option value="{{ $b->id }}" {{ old('booking_id', $transaction->booking_id) == $b->id ? 'selected' : '' }}>
                             🏢 Unit: {{ $b->unit_no }} - {{ $b->customer_salutation }} {{ $b->customer_name }} ({{ $b->booking_code }})
                         </option>
                     @endforeach
                 </select>
             </div>
 
-            <!-- 2. Live Customer Due Balance Matrix (Shows when booking is selected) -->
-            <div x-show="activeBooking" class="bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 text-white p-5 rounded-2xl shadow-md border border-slate-800 space-y-4" style="display: none;">
+            <!-- 2. Live Customer Due Balance Matrix -->
+            <div x-show="activeBooking" class="bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 text-white p-5 rounded-2xl shadow-md border border-slate-800 space-y-4">
                 
                 <div class="flex items-center justify-between border-b border-slate-700/80 pb-2.5">
                     <div class="flex items-center space-x-2">
                         <i class="fa-solid fa-scale-balanced text-emerald-400"></i>
-                        <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-300">Live Customer Balance Ledger Matrix</h4>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-300">Current Balance Ledger Matrix</h4>
                     </div>
                     <div class="flex items-center space-x-2">
                         <span class="text-xs font-mono font-bold bg-emerald-950 px-2.5 py-0.5 rounded text-emerald-300 border border-emerald-700">
@@ -246,7 +267,7 @@
                     <label for="voucher_date" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                         Voucher Date <span class="text-rose-500">*</span>
                     </label>
-                    <input type="date" id="voucher_date" name="voucher_date" value="{{ old('voucher_date', date('Y-m-d')) }}" required
+                    <input type="date" id="voucher_date" name="voucher_date" value="{{ old('voucher_date', $transaction->voucher_date?->format('Y-m-d')) }}" required
                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none transition">
                 </div>
 
@@ -255,7 +276,7 @@
                     <label for="voucher_no" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                         Voucher No.
                     </label>
-                    <input type="text" id="voucher_no" name="voucher_no" value="{{ old('voucher_no') }}"
+                    <input type="text" id="voucher_no" name="voucher_no" value="{{ old('voucher_no', $transaction->voucher_no) }}"
                            placeholder="e.g. VCH-00123 / Book No. 4"
                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none transition">
                 </div>
@@ -310,7 +331,7 @@
                             class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none transition">
                         <option value="">-- Cash Account / Cash in Hand --</option>
                         @foreach($bankAccounts as $acc)
-                            <option value="{{ $acc->id }}" {{ old('bank_account_id') == $acc->id ? 'selected' : '' }}>
+                            <option value="{{ $acc->id }}" {{ old('bank_account_id', $transaction->bank_account_id) == $acc->id ? 'selected' : '' }}>
                                 🏦 {{ $acc->account_nick_name }} ({{ $acc->bank_name }} - {{ $acc->account_number }})
                             </option>
                         @endforeach
@@ -333,9 +354,14 @@
 
             <!-- 5. Instrument Details (Cheque, DD, UTR Reference) -->
             <div x-show="txMode !== 'cash'" class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
-                <div class="text-xs font-bold uppercase tracking-wider text-slate-700 pb-1 border-b border-slate-200 flex items-center space-x-2">
-                    <i class="fa-solid fa-money-check text-sky-600"></i>
-                    <span>Banking Instrument / UTR Reference Particulars</span>
+                <div class="text-xs font-bold uppercase tracking-wider text-slate-700 pb-1 border-b border-slate-200 flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-money-check text-sky-600"></i>
+                        <span>Banking Instrument / UTR Reference Particulars</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-400 font-mono">Current Status: {{ strtoupper(str_replace('_', ' ', $transaction->instrument_status)) }}</span>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -345,7 +371,7 @@
                         <label for="instrument_ref_no" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                             Cheque / UTR / Txn No
                         </label>
-                        <input type="text" id="instrument_ref_no" name="instrument_ref_no" value="{{ old('instrument_ref_no') }}"
+                        <input type="text" id="instrument_ref_no" name="instrument_ref_no" value="{{ old('instrument_ref_no', $transaction->instrument_ref_no) }}"
                                placeholder="e.g. CHQ-654321 or UTR-987654"
                                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition">
                     </div>
@@ -355,7 +381,7 @@
                         <label for="instrument_date" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                             Instrument Date
                         </label>
-                        <input type="date" id="instrument_date" name="instrument_date" value="{{ old('instrument_date', date('Y-m-d')) }}"
+                        <input type="date" id="instrument_date" name="instrument_date" value="{{ old('instrument_date', $transaction->instrument_date?->format('Y-m-d')) }}"
                                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition">
                     </div>
 
@@ -364,7 +390,7 @@
                         <label for="issuing_bank" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                             Customer / Issuing Bank
                         </label>
-                        <input type="text" id="issuing_bank" name="issuing_bank" value="{{ old('issuing_bank') }}"
+                        <input type="text" id="issuing_bank" name="issuing_bank" value="{{ old('issuing_bank', $transaction->issuing_bank) }}"
                                placeholder="e.g. State Bank of India"
                                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition">
                     </div>
@@ -374,9 +400,23 @@
                         <label for="issuing_branch" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                             Issuing Branch
                         </label>
-                        <input type="text" id="issuing_branch" name="issuing_branch" value="{{ old('issuing_branch') }}"
+                        <input type="text" id="issuing_branch" name="issuing_branch" value="{{ old('issuing_branch', $transaction->issuing_branch) }}"
                                placeholder="e.g. Silchar Main"
                                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition">
+                    </div>
+
+                    <!-- Instrument Clearance Status -->
+                    <div class="sm:col-span-2">
+                        <label for="instrument_status" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                            Instrument Status
+                        </label>
+                        <select id="instrument_status" name="instrument_status" x-model="instrumentStatus"
+                                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition">
+                            <option value="cleared">Cleared (Funds Settled)</option>
+                            <option value="pending_clearance">Pending Clearance</option>
+                            <option value="dishonored">Dishonored / Bounced</option>
+                            <option value="not_applicable">Not Applicable</option>
+                        </select>
                     </div>
 
                 </div>
@@ -389,21 +429,27 @@
                 </label>
                 <textarea id="particulars" name="particulars" rows="2"
                           placeholder="e.g. Part payment received towards 2nd installment of Sale Agreement"
-                          class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none transition">{{ old('particulars') }}</textarea>
+                          class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none transition">{{ old('particulars', $transaction->particulars) }}</textarea>
             </div>
 
             <!-- Submit Actions -->
-            <div class="pt-4 border-t border-slate-100 flex items-center justify-end space-x-3">
-                <a href="{{ route('project.transactions.index', $project->id) }}" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition">
-                    Cancel
-                </a>
-                <button type="submit"
-                        :disabled="activeBooking && enteredAmount > activeBooking.bookingAmount"
-                        class="px-6 py-2.5 text-white text-xs font-semibold rounded-xl shadow-md transition flex items-center space-x-2"
-                        :class="activeBooking && enteredAmount > activeBooking.bookingAmount ? 'opacity-50 cursor-not-allowed bg-slate-400' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20'">
-                    <i class="fa-solid fa-check"></i>
-                    <span>Generate & Record Voucher</span>
-                </button>
+            <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <span class="text-[11px] text-slate-400">
+                    <i class="fa-solid fa-shield-halved mr-1 text-slate-400"></i>
+                    Updates will automatically recalculate customer ledger and balance due metrics.
+                </span>
+                <div class="flex items-center space-x-3">
+                    <a href="{{ route('project.transactions.index', $project->id) }}" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition">
+                        Cancel
+                    </a>
+                    <button type="submit"
+                            :disabled="activeBooking && enteredAmount > activeBooking.bookingAmount"
+                            class="px-6 py-2.5 text-white text-xs font-semibold rounded-xl shadow-md transition flex items-center space-x-2"
+                            :class="activeBooking && enteredAmount > activeBooking.bookingAmount ? 'opacity-50 cursor-not-allowed bg-slate-400' : 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20'">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Save Changes</span>
+                    </button>
+                </div>
             </div>
 
         </form>

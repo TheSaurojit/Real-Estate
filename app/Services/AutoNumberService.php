@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\AutoNumberSequence;
 use App\Models\BankAccount;
+use App\Models\Booking;
 use App\Models\Company;
 use App\Models\Project;
 use App\Models\User;
@@ -168,6 +169,83 @@ class AutoNumberService
                 : (string)$currentNumber;
             $candidate = $prefix . $padded;
             $exists = $this->codeExists($entityType, $candidate);
+            if ($exists) {
+                $currentNumber++;
+            }
+        } while ($exists);
+
+        return $candidate;
+    }
+
+    /**
+     * Generate next booking code following Stage 2.1.1 format:
+     * <Company code>/<Project Nick name>/BID-<Booking serial no.>
+     * e.g. GPR/HL/BID-001
+     */
+    public function generateBookingCode(Project $project, bool $increment = true): string
+    {
+        return DB::transaction(function () use ($project, $increment) {
+            $company = $project->company ?? Company::find($project->company_id);
+            $companyCode = strtoupper($company?->company_code ?? 'CMP');
+            $nickName = strtoupper($project->nick_name ?: 'PRJ');
+            $prefix = "{$companyCode}/{$nickName}/BID-";
+
+            $sequence = AutoNumberSequence::where('company_id', $project->company_id)
+                ->where('entity_type', 'booking_' . $project->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$sequence) {
+                $sequence = AutoNumberSequence::create([
+                    'company_id'  => $project->company_id,
+                    'entity_type' => 'booking_' . $project->id,
+                    'prefix'      => $prefix,
+                    'next_number' => 1,
+                    'padding'     => 3,
+                    'description' => "Booking ID sequence for project {$project->name}",
+                ]);
+            }
+
+            $currentNumber = $sequence->next_number;
+
+            do {
+                $padded = str_pad((string)$currentNumber, $sequence->padding ?: 3, '0', STR_PAD_LEFT);
+                $code = $prefix . $padded;
+                $exists = Booking::where('booking_code', $code)->exists();
+                if ($exists) {
+                    $currentNumber++;
+                }
+            } while ($exists);
+
+            if ($increment) {
+                $sequence->update(['next_number' => $currentNumber + 1]);
+            }
+
+            return $code;
+        });
+    }
+
+    /**
+     * Peek next booking code following Stage 2.1.1 format
+     */
+    public function peekBookingCode(Project $project): string
+    {
+        $company = $project->company ?? Company::find($project->company_id);
+        $companyCode = strtoupper($company?->company_code ?? 'CMP');
+        $nickName = strtoupper($project->nick_name ?: 'PRJ');
+        $prefix = "{$companyCode}/{$nickName}/BID-";
+
+        $sequence = AutoNumberSequence::where('company_id', $project->company_id)
+            ->where('entity_type', 'booking_' . $project->id)
+            ->first();
+
+        $currentNumber = $sequence?->next_number ?? 1;
+        $padding = $sequence?->padding ?? 3;
+
+        do {
+            $padded = str_pad((string)$currentNumber, $padding, '0', STR_PAD_LEFT);
+            $candidate = $prefix . $padded;
+            $exists = Booking::where('booking_code', $candidate)->exists();
             if ($exists) {
                 $currentNumber++;
             }

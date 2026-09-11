@@ -5,6 +5,8 @@
     activeTab: 'jobsheets',
     showCancelModal: false,
     showAddCustomizationModal: false,
+    showEditCustomizationModal: false,
+    showAdjustmentsModal: false,
     showAgreementModal: false,
     showLoanModal: false,
     showDeedModal: false,
@@ -17,6 +19,34 @@
     qty: 1,
     get calculatedJobTotal() {
         return Math.round(((parseFloat(this.matRate || 0) + parseFloat(this.labRate || 0) + parseFloat(this.schRate || 0)) * parseFloat(this.qty || 1)) * 100) / 100;
+    },
+
+    // Edit customization state
+    editId: null,
+    editJobType: 'addon',
+    editParticular: '',
+    editDescription: '',
+    editMatRate: 0,
+    editLabRate: 0,
+    editSchRate: 0,
+    editQty: 1,
+    editUnit: 'Nos',
+    editActionUrl: '',
+    get editCalculatedJobTotal() {
+        return Math.round(((parseFloat(this.editMatRate || 0) + parseFloat(this.editLabRate || 0) + parseFloat(this.editSchRate || 0)) * parseFloat(this.editQty || 1)) * 100) / 100;
+    },
+    openEditModal(item, updateUrl) {
+        this.editId = item.id;
+        this.editJobType = item.job_type;
+        this.editParticular = item.particular;
+        this.editDescription = item.description || '';
+        this.editMatRate = item.material_rate;
+        this.editLabRate = item.labour_rate;
+        this.editSchRate = item.schedule_rate || 0;
+        this.editQty = item.quantity;
+        this.editUnit = item.unit_measure;
+        this.editActionUrl = updateUrl;
+        this.showEditCustomizationModal = true;
     }
 }">
 
@@ -101,25 +131,11 @@
                 </a>
             @endif
 
-            @if(auth()->user()->hasPermission('create_refunds') && $booking->status === 'cancelled')
-                <a href="{{ route('project.bookings.cancellation-refund.show', [$project->id, $booking->id]) }}" class="px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center space-x-1.5">
-                    <i class="fa-solid fa-hand-holding-dollar"></i>
-                    <span>Refund Settlement</span>
-                </a>
-            @endif
-
-            @if(auth()->user()->hasPermission('edit_bookings'))
-                <a href="{{ route('project.bookings.edit', [$project->id, $booking->id]) }}" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5">
-                    <i class="fa-solid fa-pen-to-square"></i>
-                    <span>Edit Specs</span>
-                </a>
-            @endif
-
-            @if(auth()->user()->hasPermission('cancel_bookings') && $booking->status !== 'cancelled')
-                <button @click="showCancelModal = true" class="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-semibold transition border border-rose-200 flex items-center space-x-1.5">
+            @if(auth()->user()->hasPermission('cancel_bookings'))
+                <a href="{{ route('project.bookings.cancellation.show', [$project->id, $booking->id]) }}" class="px-3 py-2 {{ $booking->status === 'cancelled' ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200' }} rounded-xl text-xs font-semibold shadow-sm transition flex items-center space-x-1.5">
                     <i class="fa-solid fa-ban"></i>
-                    <span>Cancel Booking</span>
-                </button>
+                    <span>{{ $booking->status === 'cancelled' ? 'Cancellation & Refund (Stage 2.1.6)' : 'Cancel Booking (Stage 2.1.6)' }}</span>
+                </a>
             @endif
         </div>
     </div>
@@ -318,6 +334,9 @@
                                         <a href="{{ route('project.transactions.show', [$project->id, $tx->id]) }}" class="font-mono font-bold text-slate-800 hover:text-sky-600 hover:underline">
                                             {{ $tx->transaction_code }}
                                         </a>
+                                        @if($tx->voucher_no)
+                                            <div class="text-[11px] font-mono font-semibold text-slate-600">Vch: {{ $tx->voucher_no }}</div>
+                                        @endif
                                         <div class="text-slate-400 text-[11px]">{{ $tx->voucher_date->format('d M, Y') }}</div>
                                     </td>
                                     <td class="py-3 px-4 align-top text-xs">
@@ -331,7 +350,7 @@
                                             </span>
                                         @elseif($tx->voucher_type === 'payment_voucher')
                                             <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">
-                                                Payment Outflow
+                                                Payment ({{ ($tx->payment_category ?? ($tx->is_taxable_transaction ? 'taxable' : 'non_taxable')) === 'taxable' ? 'Taxable' : 'Non-Taxable' }})
                                             </span>
                                         @elseif($tx->voucher_type === 'adjustment_voucher')
                                             <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-800">
@@ -363,10 +382,22 @@
                                             </span>
                                         @endif
                                     </td>
-                                    <td class="py-3 px-4 align-top text-right">
-                                        <a href="{{ route('project.transactions.show', [$project->id, $tx->id]) }}" class="inline-flex items-center px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs transition">
+                                    <td class="py-3 px-4 align-top text-right whitespace-nowrap space-x-1">
+                                        <a href="{{ route('project.transactions.show', [$project->id, $tx->id]) }}" class="inline-flex items-center px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs transition" title="View & Print Voucher">
                                             <i class="fa-solid fa-print mr-1"></i> Voucher
                                         </a>
+                                        @if(auth()->user()->hasPermission('create_receipts'))
+                                            <a href="{{ route('project.transactions.edit', [$project->id, $tx->id]) }}" class="inline-flex items-center px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded text-xs font-semibold transition" title="Edit Transaction">
+                                                <i class="fa-solid fa-pen-to-square mr-1"></i> Edit
+                                            </a>
+                                            <form action="{{ route('project.transactions.destroy', [$project->id, $tx->id]) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to permanently delete transaction {{ $tx->transaction_code }}? This will reverse its financial ledger entries and update customer balances.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="inline-flex items-center px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded text-xs font-semibold transition" title="Delete Transaction">
+                                                    <i class="fa-solid fa-trash mr-1"></i> Delete
+                                                </button>
+                                            </form>
+                                        @endif
                                     </td>
                                 </tr>
                             @empty
@@ -382,99 +413,186 @@
 
             </div>
                 
+            <!-- TAB 1: CUSTOMIZATION JOB SHEETS (Stage 2.1.4) -->
+            <div x-show="activeTab === 'jobsheets'" class="space-y-6">
+                
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-100">
                     <div>
                         <h3 class="text-base font-bold text-slate-800 flex items-center space-x-2">
                             <i class="fa-solid fa-sliders text-indigo-600"></i>
-                            <span>Property Customization Job Sheets</span>
+                            <span>2.1.4. Booking Customization & Job Sheets</span>
                         </h3>
                         <p class="text-xs text-slate-500 mt-0.5">
-                            Record Add-ons (extra customer requirements) and Dislodges (materials deducted by client with adjusted labor).
+                            Manage extra Add-ons, client-supplied Dislodges, Adjustments (Discounts), and Dual-Accounting Splits.
                         </p>
                     </div>
-                    <button @click="showAddCustomizationModal = true" class="inline-flex items-center space-x-2 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
-                        <i class="fa-solid fa-plus"></i>
-                        <span>Add Job Sheet Item</span>
-                    </button>
+                    <div class="flex items-center space-x-2">
+                        <button @click="showAdjustmentsModal = true" class="inline-flex items-center space-x-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-xs font-bold transition">
+                            <i class="fa-solid fa-tags"></i>
+                            <span>Adjustments: -₹{{ number_format($booking->adjustments, 2) }}</span>
+                        </button>
+                        <button @click="showAddCustomizationModal = true" class="inline-flex items-center space-x-2 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Add Job Sheet Item</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stage 2.1.4 Financial Breakdown Summary -->
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 text-xs font-mono">
+                    <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                        <span class="text-[10px] uppercase font-sans text-slate-400 block font-bold">Consideration Val</span>
+                        <span class="text-xs font-bold text-slate-800">₹{{ number_format($booking->consideration_value, 2) }}</span>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                        <span class="text-[10px] uppercase font-sans text-slate-400 block font-bold">Sale Agreement Val</span>
+                        <span class="text-xs font-bold text-slate-800">₹{{ number_format($booking->taxable_agreement_value, 2) }}</span>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                        <span class="text-[10px] uppercase font-sans text-slate-400 block font-bold">Taxable Value</span>
+                        <span class="text-xs font-bold text-slate-800">₹{{ number_format($booking->taxable_agreement_value, 2) }}</span>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                        <span class="text-[10px] uppercase font-sans text-slate-400 block font-bold">Tax Value (GST)</span>
+                        <span class="text-xs font-bold text-slate-800">₹{{ number_format($booking->tax_amount, 2) }}</span>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                        <span class="text-[10px] uppercase font-sans text-emerald-600 block font-bold">Add ons (+)</span>
+                        <span class="text-xs font-bold text-emerald-700">₹{{ number_format($booking->customizations()->where('job_type', 'addon')->sum('job_total'), 2) }}</span>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                        <span class="text-[10px] uppercase font-sans text-amber-600 block font-bold">Dislodges (-)</span>
+                        <span class="text-xs font-bold text-amber-700">₹{{ number_format($booking->customizations()->where('job_type', 'dislodge')->sum('job_total'), 2) }}</span>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                        <span class="text-[10px] uppercase font-sans text-indigo-600 block font-bold">Supplement Cost</span>
+                        <span class="text-xs font-bold text-indigo-700">{{ $booking->supplementary_value >= 0 ? '+' : '' }}₹{{ number_format($booking->supplementary_value, 2) }}</span>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                        <span class="text-[10px] uppercase font-sans text-sky-600 block font-bold">Gross Booking Val</span>
+                        <span class="text-xs font-bold text-sky-800">₹{{ number_format($booking->gross_booking_value ?: $booking->total_booking_value, 2) }}</span>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                        <span class="text-[10px] uppercase font-sans text-amber-600 block font-bold">Adjustments</span>
+                        <span class="text-xs font-bold text-amber-800">-₹{{ number_format($booking->adjustments, 2) }}</span>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                        <span class="text-[10px] uppercase font-sans text-emerald-600 block font-bold">Final Booking Val</span>
+                        <span class="text-xs font-black text-emerald-800">₹{{ number_format($booking->final_booking_value ?: $booking->total_booking_value, 2) }}</span>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                        <span class="text-[10px] uppercase font-sans text-sky-600 block font-bold">Gross Taxable Val</span>
+                        <span class="text-xs font-bold text-sky-800">₹{{ number_format($booking->gross_taxable_value, 2) }}</span>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                        <span class="text-[10px] uppercase font-sans text-slate-500 block font-bold">Finance Sanctioned</span>
+                        <span class="text-xs font-bold text-slate-800">₹{{ number_format($booking->bankFinance?->sanctioned_amount ?? 0, 2) }}</span>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                        <span class="text-[10px] uppercase font-sans text-emerald-600 block font-bold">Party (Self-Taxable)</span>
+                        <span class="text-xs font-bold text-emerald-800">₹{{ number_format($booking->party_self_taxable, 2) }}</span>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                        <span class="text-[10px] uppercase font-sans text-amber-600 block font-bold">Party (Non-Tax/Cash)</span>
+                        <span class="text-xs font-bold text-amber-800">₹{{ number_format($booking->party_non_taxable_cash ?: $booking->gross_cash_value, 2) }}</span>
+                    </div>
                 </div>
 
                 <!-- Customizations Table -->
                 <div class="overflow-x-auto border border-slate-200 rounded-xl">
-                    <table class="w-full text-left text-sm text-slate-600">
-                        <thead class="text-xs font-bold uppercase text-slate-500 bg-slate-50 border-b border-slate-200">
+                    <table class="w-full text-left text-xs text-slate-600">
+                        <thead class="text-[11px] font-bold uppercase text-slate-500 bg-slate-50 border-b border-slate-200">
                             <tr>
-                                <th class="py-3 px-4">Type</th>
-                                <th class="py-3 px-4">Particular / Scope of Work</th>
-                                <th class="py-3 px-4">Material Rate</th>
-                                <th class="py-3 px-4">Labour Rate</th>
-                                <th class="py-3 px-4">Quantity</th>
-                                <th class="py-3 px-4">Item Total</th>
-                                <th class="py-3 px-4 text-right">Action</th>
+                                <th class="py-3 px-3">Type</th>
+                                <th class="py-3 px-3">Particular</th>
+                                <th class="py-3 px-3">Description</th>
+                                <th class="py-3 px-3 font-mono">Mat. Rate</th>
+                                <th class="py-3 px-3 font-mono">Lab. Rate</th>
+                                <th class="py-3 px-3 font-mono">Qty & Unit</th>
+                                <th class="py-3 px-3 font-mono">Mat. Total</th>
+                                <th class="py-3 px-3 font-mono">Lab. Total</th>
+                                <th class="py-3 px-3 font-mono">Gross Total</th>
+                                <th class="py-3 px-3 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
                             @forelse($booking->customizations as $c)
+                                @php
+                                    $matTot = $c->material_total ?: round((float)$c->material_rate * (float)$c->quantity, 2);
+                                    $labTot = $c->labour_total ?: round((float)$c->labour_rate * (float)$c->quantity, 2);
+                                @endphp
                                 <tr class="hover:bg-slate-50 transition">
-                                    
-                                    <td class="py-3 px-4 align-top">
+                                    <td class="py-3 px-3 align-top">
                                         @if($c->job_type === 'addon')
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                                                 + Add-on
                                             </span>
                                         @else
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
                                                 - Dislodge
                                             </span>
                                         @endif
                                     </td>
 
-                                    <td class="py-3 px-4 align-top text-xs">
+                                    <td class="py-3 px-3 align-top">
                                         <div class="font-bold text-slate-800">{{ $c->particular }}</div>
-                                        @if($c->description)
-                                            <div class="text-slate-400 text-[11px] mt-0.5">{{ $c->description }}</div>
-                                        @endif
                                     </td>
 
-                                    <td class="py-3 px-4 align-top text-xs font-mono">
+                                    <td class="py-3 px-3 align-top text-slate-500 max-w-xs">
+                                        {{ $c->description ?: '-' }}
+                                    </td>
+
+                                    <td class="py-3 px-3 align-top font-mono">
                                         ₹{{ number_format($c->material_rate, 2) }}
                                     </td>
 
-                                    <td class="py-3 px-4 align-top text-xs font-mono">
+                                    <td class="py-3 px-3 align-top font-mono">
                                         ₹{{ number_format($c->labour_rate, 2) }}
                                     </td>
 
-                                    <td class="py-3 px-4 align-top text-xs font-mono font-medium">
+                                    <td class="py-3 px-3 align-top font-mono font-medium">
                                         {{ $c->quantity }} {{ $c->unit_measure }}
                                     </td>
 
-                                    <td class="py-3 px-4 align-top text-xs font-mono font-bold text-slate-800">
+                                    <td class="py-3 px-3 align-top font-mono text-slate-700">
+                                        ₹{{ number_format($matTot, 2) }}
+                                    </td>
+
+                                    <td class="py-3 px-3 align-top font-mono text-slate-700">
+                                        ₹{{ number_format($labTot, 2) }}
+                                    </td>
+
+                                    <td class="py-3 px-3 align-top font-mono font-bold text-slate-900">
                                         {{ $c->job_type === 'addon' ? '+' : '-' }}₹{{ number_format($c->job_total, 2) }}
                                     </td>
 
-                                    <td class="py-3 px-4 align-top text-right">
+                                    <td class="py-3 px-3 align-top text-right space-x-1 whitespace-nowrap">
+                                        <button type="button" @click="openEditModal({{ json_encode($c) }}, '{{ route('project.bookings.jobsheets.update', [$project->id, $booking->id, $c->id]) }}')"
+                                                class="p-1.5 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded transition" title="Edit Line Item">
+                                            <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                        </button>
                                         <form action="{{ route('project.bookings.jobsheets.destroy', [$project->id, $booking->id, $c->id]) }}" method="POST" class="inline" onsubmit="return confirm('Remove this customization item?')">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded transition" title="Delete Line Item">
+                                            <button type="submit" class="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded transition" title="Delete Line Item">
                                                 <i class="fa-solid fa-trash text-xs"></i>
                                             </button>
                                         </form>
                                     </td>
-
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="py-8 text-center text-slate-400 text-xs">
+                                    <td colspan="10" class="py-8 text-center text-slate-400 text-xs">
                                         No customization items added yet. Click <strong>"+ Add Job Sheet Item"</strong> to record extra electrical/civil add-ons or material deductions.
                                     </td>
                                 </tr>
                             @endforelse
                         </tbody>
                         @if($booking->customizations->count() > 0)
-                            <tfoot class="bg-slate-50 font-bold text-xs border-t border-slate-200">
+                            <tfoot class="bg-slate-50 font-bold text-xs border-t border-slate-200 font-mono">
                                 <tr>
-                                    <td colspan="5" class="py-3 px-4 text-right text-slate-700">Net Supplementary Value Rollup:</td>
-                                    <td class="py-3 px-4 font-mono {{ $booking->supplementary_value >= 0 ? 'text-indigo-700' : 'text-amber-700' }} text-sm font-black">
+                                    <td colspan="8" class="py-3 px-3 text-right text-slate-700 font-sans">Net Supplement Cost (Add-ons - Dislodges):</td>
+                                    <td class="py-3 px-3 {{ $booking->supplementary_value >= 0 ? 'text-indigo-700' : 'text-amber-700' }} text-sm font-black">
                                         {{ $booking->supplementary_value > 0 ? '+' : '' }}₹{{ number_format($booking->supplementary_value, 2) }}
                                     </td>
                                     <td></td>
@@ -698,17 +816,17 @@
 
             </div>
 
-            <!-- TAB 4: SALE DEED & REGISTRATION -->
+            <!-- TAB 4: SALE DEED & REGISTRATION (Stage 2.1.5) -->
             <div x-show="activeTab === 'deed'" class="space-y-6">
                 
                 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                     <div>
                         <h3 class="text-base font-bold text-slate-800 flex items-center space-x-2">
                             <i class="fa-solid fa-certificate text-purple-600"></i>
-                            <span>Sale Deed & Registration Registry</span>
+                            <span>2.1.5. Reg. Sale Deed Information</span>
                         </h3>
                         <p class="text-xs text-slate-500 mt-0.5">
-                            Record the permanent registered sale deed number, execution date, and sub-registrar office details.
+                            Keep track of the permanent sale deed documentation, execution date, registered deed value, and registry jurisdiction.
                         </p>
                     </div>
                 </div>
@@ -716,57 +834,76 @@
                 @php $deed = $booking->saleDeed; @endphp
                 <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200">
                     
-                    <form action="{{ route('project.bookings.sale-deed.update', [$project->id, $booking->id]) }}" method="POST" class="space-y-4">
+                    <form action="{{ route('project.bookings.sale-deed.update', [$project->id, $booking->id]) }}" method="POST" class="space-y-4"
+                          x-data="{ deedStatus: '{{ in_array($deed?->status, ['executed', 'registered']) ? 'executed' : 'pending' }}' }">
                         @csrf
                         @method('PUT')
 
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             
-                            <!-- Status -->
+                            <!-- Sale Deed Status -->
                             <div>
                                 <label for="deed_status" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                                    Registration Status <span class="text-rose-500">*</span>
+                                    Sale Deed Status <span class="text-rose-500">*</span>
                                 </label>
-                                <select id="deed_status" name="status" required
-                                        class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
-                                    <option value="pending" {{ ($deed->status ?? 'pending') === 'pending' ? 'selected' : '' }}>Pending Registration</option>
-                                    <option value="registered" {{ ($deed->status ?? '') === 'registered' ? 'selected' : '' }}>Registered Deed Completed</option>
+                                <select id="deed_status" name="status" x-model="deedStatus" required
+                                        class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+                                    <option value="pending">Pending</option>
+                                    <option value="executed">Executed</option>
                                 </select>
                             </div>
 
-                            <!-- Sale Deed No -->
+                            <!-- Sale Deed Doc No -->
                             <div>
                                 <label for="sale_deed_no" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                                    Sale Deed Number
+                                    Sale Deed Doc. No.
                                 </label>
                                 <input type="text" id="sale_deed_no" name="sale_deed_no" value="{{ old('sale_deed_no', $deed->sale_deed_no ?? '') }}"
-                                       placeholder="e.g. Deed No 1234/2026"
-                                       class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+                                       placeholder="e.g. Deed No. 1234/2026"
+                                       :disabled="deedStatus === 'pending'"
+                                       :class="deedStatus === 'pending' ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white text-slate-800'"
+                                       class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
                             </div>
 
                             <!-- Executed Date -->
                             <div>
                                 <label for="executed_date" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                                    Registration Date
+                                    Sale Deed Date
                                 </label>
                                 <input type="date" id="executed_date" name="executed_date" value="{{ old('executed_date', $deed?->executed_date?->format('Y-m-d')) }}"
-                                       class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+                                       :disabled="deedStatus === 'pending'"
+                                       :class="deedStatus === 'pending' ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white text-slate-800'"
+                                       class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
                             </div>
 
-                            <!-- Sub Registrar Office -->
-                            <div class="sm:col-span-2">
-                                <label for="sub_registrar_office" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                                    Sub-Registrar Office
+                            <!-- Sale Deed Value -->
+                            <div>
+                                <label for="sale_deed_value" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                                    Sale Deed Value (₹)
                                 </label>
-                                <input type="text" id="sub_registrar_office" name="sub_registrar_office" value="{{ old('sub_registrar_office', $deed->sub_registrar_office ?? '') }}"
+                                <input type="number" step="0.01" id="sale_deed_value" name="sale_deed_value" value="{{ old('sale_deed_value', $deed->sale_deed_value ?? $booking->taxable_agreement_value) }}"
+                                       placeholder="0.00"
+                                       :disabled="deedStatus === 'pending'"
+                                       :class="deedStatus === 'pending' ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white text-slate-800 font-bold'"
+                                       class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+                            </div>
+
+                            <!-- Executed In -->
+                            <div class="sm:col-span-2">
+                                <label for="executed_in" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                                    Executed In
+                                </label>
+                                <input type="text" id="executed_in" name="executed_in" value="{{ old('executed_in', $deed->executed_in ?? $deed->sub_registrar_office ?? '') }}"
                                        placeholder="e.g. Senior Sub-Registrar Office, Silchar, Cachar"
-                                       class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+                                       :disabled="deedStatus === 'pending'"
+                                       :class="deedStatus === 'pending' ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white text-slate-800'"
+                                       class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
                             </div>
 
                             <!-- Remarks -->
                             <div class="sm:col-span-3">
                                 <label for="deed_remarks" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                                    Registration Remarks
+                                    Remarks
                                 </label>
                                 <textarea id="deed_remarks" name="remarks" rows="2"
                                           placeholder="e.g. Volume No 14, Book No 1, Pages 100 to 125"
@@ -778,7 +915,7 @@
                         <div class="flex items-center justify-end pt-3">
                             <button type="submit" class="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm">
                                 <i class="fa-solid fa-floppy-disk"></i>
-                                <span>Save Sale Deed Records</span>
+                                <span>Save Sale Deed Information</span>
                             </button>
                         </div>
 
@@ -883,18 +1020,32 @@
                 <!-- Particular -->
                 <div>
                     <label for="particular" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                        Particular / Item Name <span class="text-rose-500">*</span>
+                        Particular / Category <span class="text-rose-500">*</span>
                     </label>
-                    <input type="text" id="particular" name="particular" required
-                           placeholder="e.g. Extra AC Point Wiring, Marble Flooring upgrade"
-                           class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition">
+                    <select id="particular" name="particular" required
+                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition">
+                        <option value="" disabled selected>-- Select Standard Particular --</option>
+                        @foreach(\App\Models\BookingCustomization::PARTICULARS as $part)
+                            <option value="{{ $part }}">{{ $part }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label for="description" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Description / Work Specifications
+                    </label>
+                    <input type="text" id="description" name="description"
+                           placeholder="e.g. Extra 16A power points in master bedroom, Italian marble upgrade"
+                           class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition">
                 </div>
 
                 <!-- Rate Inputs -->
                 <div class="grid grid-cols-3 gap-3">
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                            Material (₹)
+                            Material Rate (₹)
                         </label>
                         <input type="number" step="0.01" name="material_rate" x-model.number="matRate" required
                                placeholder="0.00"
@@ -903,7 +1054,7 @@
 
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                            Labour (₹)
+                            Labour Rate (₹)
                         </label>
                         <input type="number" step="0.01" name="labour_rate" x-model.number="labRate" required
                                placeholder="0.00"
@@ -912,7 +1063,7 @@
 
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                            Schedule (₹)
+                            Schedule Rate (₹)
                         </label>
                         <input type="number" step="0.01" name="schedule_rate" x-model.number="schRate"
                                placeholder="0.00"
@@ -945,12 +1096,20 @@
                     </div>
                 </div>
 
-                <!-- Live Total Preview -->
-                <div class="p-3 rounded-xl bg-slate-100 flex items-center justify-between border border-slate-200">
-                    <span class="text-xs font-bold text-slate-700">Calculated Line Total:</span>
-                    <span class="text-base font-black font-mono" :class="jobType === 'addon' ? 'text-emerald-700' : 'text-amber-700'" x-text="(jobType === 'addon' ? '+' : '-') + '₹' + calculatedJobTotal.toFixed(2)">
-                        ₹0.00
-                    </span>
+                <!-- Live Breakdown Preview -->
+                <div class="grid grid-cols-3 gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                    <div>
+                        <span class="text-slate-500 block text-[10px] uppercase font-bold">Material Tot:</span>
+                        <span class="font-mono font-bold text-slate-800" x-text="'₹' + (Math.round((parseFloat(matRate || 0) * parseFloat(qty || 0)) * 100) / 100).toFixed(2)">₹0.00</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 block text-[10px] uppercase font-bold">Labour Tot:</span>
+                        <span class="font-mono font-bold text-slate-800" x-text="'₹' + (Math.round((parseFloat(labRate || 0) * parseFloat(qty || 0)) * 100) / 100).toFixed(2)">₹0.00</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 block text-[10px] uppercase font-bold">Total Net:</span>
+                        <span class="font-mono font-black" :class="jobType === 'addon' ? 'text-emerald-700' : 'text-amber-700'" x-text="(jobType === 'addon' ? '+' : '-') + '₹' + calculatedJobTotal.toFixed(2)">₹0.00</span>
+                    </div>
                 </div>
 
                 <div class="flex items-center justify-end space-x-2 pt-2">
@@ -959,6 +1118,207 @@
                     </button>
                     <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-md transition">
                         Add to Job Sheet
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+    <!-- MODAL: EDIT CUSTOMIZATION (JOB SHEET) ITEM -->
+    <div x-show="showEditCustomizationModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50" style="display: none;">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200" @click.away="showEditCustomizationModal = false">
+            
+            <div class="bg-gradient-to-r from-sky-600 to-indigo-600 px-6 py-4 text-white flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-pen-to-square text-white"></i>
+                    <h3 class="font-bold text-sm">EDIT JOB SHEET CUSTOMIZATION ITEM</h3>
+                </div>
+                <button @click="showEditCustomizationModal = false" class="text-white/80 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form :action="editActionUrl" method="POST" class="p-6 space-y-4">
+                @csrf
+                @method('PUT')
+
+                <!-- Job Type: Addon vs Dislodge -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Customization Type <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="flex items-center space-x-2 p-2.5 rounded-xl border cursor-pointer transition"
+                               :class="editJobType === 'addon' ? 'bg-emerald-50 border-emerald-500 text-emerald-800 font-bold' : 'border-slate-200 hover:bg-slate-50 text-slate-600'">
+                            <input type="radio" name="job_type" value="addon" x-model="editJobType" class="text-emerald-600 focus:ring-emerald-500">
+                            <span class="text-xs">+ Add-on (Addition)</span>
+                        </label>
+                        <label class="flex items-center space-x-2 p-2.5 rounded-xl border cursor-pointer transition"
+                               :class="editJobType === 'dislodge' ? 'bg-amber-50 border-amber-500 text-amber-800 font-bold' : 'border-slate-200 hover:bg-slate-50 text-slate-600'">
+                            <input type="radio" name="job_type" value="dislodge" x-model="editJobType" class="text-amber-600 focus:ring-amber-500">
+                            <span class="text-xs">- Dislodge (Deduction)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Particular -->
+                <div>
+                    <label for="edit_particular" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Particular / Category <span class="text-rose-500">*</span>
+                    </label>
+                    <select id="edit_particular" name="particular" x-model="editParticular" required
+                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none transition">
+                        @foreach(\App\Models\BookingCustomization::PARTICULARS as $part)
+                            <option value="{{ $part }}">{{ $part }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label for="edit_description" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Description / Work Specifications
+                    </label>
+                    <input type="text" id="edit_description" name="description" x-model="editDescription"
+                           placeholder="e.g. Extra 16A power points in master bedroom, Italian marble upgrade"
+                           class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none transition">
+                </div>
+
+                <!-- Rate Inputs -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                            Material Rate (₹)
+                        </label>
+                        <input type="number" step="0.01" name="material_rate" x-model.number="editMatRate" required
+                               placeholder="0.00"
+                               class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                            Labour Rate (₹)
+                        </label>
+                        <input type="number" step="0.01" name="labour_rate" x-model.number="editLabRate" required
+                               placeholder="0.00"
+                               class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                            Schedule Rate (₹)
+                        </label>
+                        <input type="number" step="0.01" name="schedule_rate" x-model.number="editSchRate"
+                               placeholder="0.00"
+                               class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none transition">
+                    </div>
+                </div>
+
+                <!-- Quantity & Unit -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                            Quantity <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="number" step="0.01" name="quantity" x-model.number="editQty" required min="0.01"
+                               class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                            Unit <span class="text-rose-500">*</span>
+                        </label>
+                        <select name="unit_measure" x-model="editUnit" required
+                                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none transition">
+                            <option value="LS">LS (Lump Sum)</option>
+                            <option value="nos">nos (Units)</option>
+                            <option value="sq.ft.">sq.ft.</option>
+                            <option value="points">points</option>
+                            <option value="rft">rft</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Live Breakdown Preview -->
+                <div class="grid grid-cols-3 gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                    <div>
+                        <span class="text-slate-500 block text-[10px] uppercase font-bold">Material Tot:</span>
+                        <span class="font-mono font-bold text-slate-800" x-text="'₹' + (Math.round((parseFloat(editMatRate || 0) * parseFloat(editQty || 0)) * 100) / 100).toFixed(2)">₹0.00</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 block text-[10px] uppercase font-bold">Labour Tot:</span>
+                        <span class="font-mono font-bold text-slate-800" x-text="'₹' + (Math.round((parseFloat(editLabRate || 0) * parseFloat(editQty || 0)) * 100) / 100).toFixed(2)">₹0.00</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 block text-[10px] uppercase font-bold">Total Net:</span>
+                        <span class="font-mono font-black" :class="editJobType === 'addon' ? 'text-emerald-700' : 'text-amber-700'" x-text="(editJobType === 'addon' ? '+' : '-') + '₹' + editCalculatedJobTotal.toFixed(2)">₹0.00</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end space-x-2 pt-2">
+                    <button type="button" @click="showEditCustomizationModal = false" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-semibold shadow-md transition">
+                        Save Changes
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+    <!-- MODAL: ADJUSTMENTS (DISCOUNT) -->
+    <div x-show="showAdjustmentsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50" style="display: none;">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200" @click.away="showAdjustmentsModal = false">
+            
+            <div class="bg-gradient-to-r from-amber-600 to-orange-600 px-6 py-4 text-white flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-tags text-white"></i>
+                    <h3 class="font-bold text-sm">SET BOOKING ADJUSTMENTS (DISCOUNT)</h3>
+                </div>
+                <button @click="showAdjustmentsModal = false" class="text-white/80 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form action="{{ route('project.bookings.adjustments.update', [$project->id, $booking->id]) }}" method="POST" class="p-6 space-y-4"
+                  x-data="{ currentAdjust: {{ (float)$booking->adjustments }}, grossVal: {{ (float)($booking->gross_booking_value ?: $booking->total_booking_value) }} }">
+                @csrf
+
+                <div>
+                    <label for="adjustments" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Adjustments / Discount Amount (₹) <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="number" step="0.01" min="0" id="adjustments" name="adjustments" x-model.number="currentAdjust" required
+                           class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none transition">
+                    <span class="text-[11px] text-slate-400 mt-1 block">Special client discounts, promotional waivers, or lump-sum concessions deducted from Gross Booking Value.</span>
+                </div>
+
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1">
+                    <div class="flex justify-between text-slate-600">
+                        <span>Gross Booking Value:</span>
+                        <span class="font-mono font-bold">₹{{ number_format($booking->gross_booking_value ?: $booking->total_booking_value, 2) }}</span>
+                    </div>
+                    <div class="flex justify-between text-amber-700">
+                        <span>Less Adjustments:</span>
+                        <span class="font-mono font-bold" x-text="'-₹' + (parseFloat(currentAdjust || 0)).toFixed(2)">-₹0.00</span>
+                    </div>
+                    <div class="pt-1 border-t border-slate-200 flex justify-between font-bold text-slate-900">
+                        <span>New Final Booking Value:</span>
+                        <span class="font-mono text-emerald-700 font-black" x-text="'₹' + Math.max(0, (grossVal - parseFloat(currentAdjust || 0))).toFixed(2)">₹0.00</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end space-x-2 pt-2">
+                    <button type="button" @click="showAdjustmentsModal = false" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold shadow-md transition">
+                        Update Adjustments
                     </button>
                 </div>
 

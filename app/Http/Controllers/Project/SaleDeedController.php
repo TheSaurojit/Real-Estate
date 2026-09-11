@@ -17,25 +17,31 @@ class SaleDeedController extends Controller
     public function update(Request $request, Project $project, Booking $booking): RedirectResponse
     {
         $validated = $request->validate([
-            'status'                => ['required', 'in:pending,registered'],
+            'status'                => ['required', 'in:pending,executed,registered'],
             'sale_deed_no'          => ['nullable', 'string', 'max:100'],
             'executed_date'         => ['nullable', 'date'],
+            'sale_deed_value'       => ['nullable', 'numeric', 'min:0'],
+            'executed_in'           => ['nullable', 'string', 'max:255'],
             'sub_registrar_office'  => ['nullable', 'string', 'max:150'],
             'remarks'               => ['nullable', 'string', 'max:1000'],
         ]);
 
         $saleDeed = $booking->saleDeed ?? new SaleDeed(['booking_id' => $booking->id]);
 
+        $executedIn = $validated['executed_in'] ?? $validated['sub_registrar_office'] ?? null;
+
         $saleDeed->fill([
             'status'               => $validated['status'],
             'sale_deed_no'         => $validated['sale_deed_no'],
             'executed_date'        => $validated['executed_date'],
-            'sub_registrar_office' => $validated['sub_registrar_office'],
+            'sale_deed_value'      => $validated['sale_deed_value'] ?? 0,
+            'sub_registrar_office' => $executedIn,
+            'executed_in'          => $executedIn,
             'remarks'              => $validated['remarks'],
         ]);
         $saleDeed->save();
 
-        if ($validated['status'] === 'registered' && $booking->status !== 'cancelled') {
+        if (in_array($validated['status'], ['executed', 'registered']) && $booking->status !== 'cancelled') {
             $booking->status = 'registered_deed';
             $booking->save();
         }

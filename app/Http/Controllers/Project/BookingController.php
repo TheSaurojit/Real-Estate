@@ -60,8 +60,7 @@ class BookingController extends Controller
      */
     public function create(Project $project): View
     {
-        $companyId = $project->company_id;
-        $nextBookingCode = $this->autoNumberService->peekNextNumber('booking', $companyId);
+        $nextBookingCode = $this->autoNumberService->peekBookingCode($project);
 
         return view('project.bookings.create', compact('project', 'nextBookingCode'));
     }
@@ -81,7 +80,7 @@ class BookingController extends Controller
             'built_up_area'           => ['required', 'numeric', 'min:0'],
             'super_built_up_area'     => ['required', 'numeric', 'min:0'],
             'property_type'           => ['required', 'string', 'max:100'],
-            'parking_type'            => ['required', 'in:none,private_covered,private_open,shared'],
+            'parking_type'            => ['required', 'string', 'in:none,no_parking,covered_garage,private_covered,open_dedicated_bay,private_open,shared,shared_parking,open_dedicated_parking'],
             'parking_no'              => ['nullable', 'string', 'max:50'],
             'reference_source'        => ['nullable', 'string', 'max:100'],
 
@@ -110,7 +109,7 @@ class BookingController extends Controller
         ]);
 
         $companyId = $project->company_id;
-        $bookingCode = $this->autoNumberService->getNextNumber('booking', $companyId, true);
+        $bookingCode = $this->autoNumberService->generateBookingCode($project, true);
 
         // Pre-compute basic pricing
         $rate = (float)$validated['rate_per_sqft'];
@@ -132,27 +131,27 @@ class BookingController extends Controller
             'booking_code'            => $bookingCode,
             'booking_date'            => $validated['booking_date'],
             'is_landowner_allocation' => $request->boolean('is_landowner_allocation'),
-            'block_name'              => $validated['block_name'],
-            'floor_no'                => $validated['floor_no'],
+            'block_name'              => $validated['block_name'] ?? null,
+            'floor_no'                => $validated['floor_no'] ?? null,
             'unit_no'                 => $validated['unit_no'],
             'built_up_area'           => $validated['built_up_area'],
             'super_built_up_area'     => $validated['super_built_up_area'],
             'property_type'           => $validated['property_type'],
             'parking_type'            => $validated['parking_type'],
-            'parking_no'              => $validated['parking_no'],
-            'reference_source'        => $validated['reference_source'],
+            'parking_no'              => $validated['parking_no'] ?? null,
+            'reference_source'        => $validated['reference_source'] ?? null,
             'customer_salutation'     => $validated['customer_salutation'],
             'customer_name'           => $validated['customer_name'],
             'guardian_relation'       => $validated['guardian_relation'],
-            'guardian_name'           => $validated['guardian_name'],
+            'guardian_name'           => $validated['guardian_name'] ?? null,
             'mobile_no'               => $validated['mobile_no'],
-            'alt_mobile_no'           => $validated['alt_mobile_no'],
-            'email_id'                => $validated['email_id'],
-            'address'                 => $validated['address'],
-            'pan_number'              => $validated['pan_number'],
-            'gstin'                   => $validated['gstin'],
+            'alt_mobile_no'           => $validated['alt_mobile_no'] ?? null,
+            'email_id'                => $validated['email_id'] ?? null,
+            'address'                 => $validated['address'] ?? null,
+            'pan_number'              => $validated['pan_number'] ?? null,
+            'gstin'                   => $validated['gstin'] ?? null,
             'photo_id_type'           => $validated['photo_id_type'],
-            'photo_id_no'             => $validated['photo_id_no'],
+            'photo_id_no'             => $validated['photo_id_no'] ?? null,
             'rate_per_sqft'           => $rate,
             'unit_cost'               => $unitCost,
             'parking_cost'            => $parking,
@@ -237,7 +236,7 @@ class BookingController extends Controller
             'built_up_area'           => ['required', 'numeric', 'min:0'],
             'super_built_up_area'     => ['required', 'numeric', 'min:0'],
             'property_type'           => ['required', 'string', 'max:100'],
-            'parking_type'            => ['required', 'in:none,private_covered,private_open,shared'],
+            'parking_type'            => ['required', 'string', 'in:none,no_parking,covered_garage,private_covered,open_dedicated_bay,private_open,shared,shared_parking,open_dedicated_parking'],
             'parking_no'              => ['nullable', 'string', 'max:50'],
             'reference_source'        => ['nullable', 'string', 'max:100'],
 

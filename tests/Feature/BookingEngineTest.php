@@ -146,7 +146,7 @@ class BookingEngineTest extends TestCase
 
         $createdBooking = Booking::where('unit_no', 'Flat-4B')->first();
         $this->assertNotNull($createdBooking);
-        $this->assertStringStartsWith('SSB/BK-', $createdBooking->booking_code);
+        $this->assertMatchesRegularExpression('/^SSB\/.*\/BID-\d{3}$/', $createdBooking->booking_code);
         $response->assertRedirect(route('project.bookings.show', [$this->project->id, $createdBooking->id]));
     }
 
@@ -297,16 +297,18 @@ class BookingEngineTest extends TestCase
         $response->assertRedirect(route('project.bookings.show', [$this->project->id, $booking->id]));
 
         $booking->refresh();
-        // Check dual accounting fields:
+        // Check dual accounting fields (Stage 2.1.4 standard formulas):
         // Agreement Value = ₹25,00,000
         // GST (5%) on Agreement Value = ₹1,25,000
         // Gross Taxable = ₹26,25,000
-        // Non-taxable Cash = Total Booking Value (40,40,000) - Agreement Value (25,00,000) = ₹15,40,000
+        // Gross Booking Value = Consideration (38,00,000) + GST (1,25,000) + Supplement (50,000) = ₹39,75,000
+        // Final Booking Value = ₹39,75,000
+        // Non-taxable Cash = Final Booking Value (39,75,000) - Gross Taxable (26,25,000) = ₹13,50,000
         $this->assertEquals('executed_agreement', $booking->status);
         $this->assertEquals(2500000.00, (float)$booking->taxable_agreement_value);
         $this->assertEquals(125000.00, (float)$booking->taxable_gst_value);
         $this->assertEquals(2625000.00, (float)$booking->gross_taxable_value);
-        $this->assertEquals(1540000.00, (float)$booking->gross_cash_value);
+        $this->assertEquals(1350000.00, (float)$booking->gross_cash_value);
     }
 
     public function test_bank_finance_and_sale_deed_updates(): void
