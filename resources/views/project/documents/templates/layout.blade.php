@@ -40,23 +40,25 @@
 <body class="bg-slate-100 min-h-screen text-slate-800 font-sans py-8 print:py-0">
 
     <!-- Top Action Bar (Hidden on Print) -->
-    <div class="max-w-4xl mx-auto mb-6 px-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 no-print">
+    <div class="max-w-4xl mx-auto mb-4 px-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 no-print">
         <div class="flex items-center space-x-3">
-            <a href="{{ route('project.documents.index', ['project' => $project->id, 'booking_id' => $booking->id]) }}" class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold shadow-sm border border-slate-200 transition flex items-center space-x-1.5">
+            <a href="{{ route('project.documents.index', ['project' => $project->id] + ($booking->id ? ['booking_id' => $booking->id] : [])) }}" class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold shadow-sm border border-slate-200 transition flex items-center space-x-1.5">
                 <i class="fa-solid fa-arrow-left"></i>
                 <span>Document Hub</span>
             </a>
+            @if($booking->id)
             <a href="{{ route('project.bookings.show', [$project->id, $booking->id]) }}" class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold shadow-sm border border-slate-200 transition flex items-center space-x-1.5">
                 <i class="fa-solid fa-door-open"></i>
                 <span>Booking Overview</span>
             </a>
+            @endif
         </div>
 
         <div class="flex items-center space-x-2">
             <!-- Document Switcher Dropdown -->
             <select onchange="window.location.href = this.value" class="px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-none shadow-sm cursor-pointer">
                 @foreach(\App\Http\Controllers\Project\DocumentController::DOCUMENT_TYPES as $typeKey => $typeInfo)
-                    <option value="{{ route('project.documents.show', [$project->id, $booking->id, $typeKey]) }}" {{ $documentType === $typeKey ? 'selected' : '' }}>
+                    <option value="{{ $booking->id ? route('project.documents.show', [$project->id, $booking->id, $typeKey]) : route('project.documents.blank', [$project->id, $typeKey]) }}" {{ $documentType === $typeKey ? 'selected' : '' }}>
                         {{ $typeInfo['title'] }}
                     </option>
                 @endforeach
@@ -68,6 +70,27 @@
             </button>
         </div>
     </div>
+
+    @if(!empty($isSpecimen) || !$booking->id)
+        <!-- Specimen Banner (Hidden on Print) -->
+        <div class="max-w-4xl mx-auto mb-6 px-4 no-print">
+            <div class="bg-amber-50 border-2 border-amber-200 text-amber-950 px-5 py-3.5 rounded-2xl text-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-xl bg-amber-200/80 text-amber-800 flex items-center justify-center font-bold text-sm shrink-0">
+                        <i class="fa-solid fa-file-signature"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-slate-900 block">Blank Specimen Template</span>
+                        <span class="text-slate-600 text-[11px]">No customer is assigned. This official document is displaying standard layout and placeholders.</span>
+                    </div>
+                </div>
+                <a href="{{ route('project.bookings.create', $project->id) }}" class="px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-bold text-xs shadow-sm transition inline-flex items-center space-x-1.5 shrink-0">
+                    <i class="fa-solid fa-user-plus text-[10px]"></i>
+                    <span>Create Customer Booking</span>
+                </a>
+            </div>
+        </div>
+    @endif
 
     <!-- Official Printable A4 Document Sheet -->
     <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl border border-slate-200/80 p-10 sm:p-14 print-page space-y-8">

@@ -278,4 +278,97 @@ class AutoNumberService
             ]
         );
     }
+
+    /**
+     * Convert numeric amount to words in Indian numbering system
+     * E.g. 3550000 -> "Rupees Thirty Five Lakh Fifty Thousand Only"
+     */
+    public static function numberToIndianWords(float|int|string $number): string
+    {
+        $amount = (float)$number;
+        if ($amount == 0) {
+            return 'Rupees Zero Only';
+        }
+
+        $isNegative = $amount < 0;
+        $amount = abs($amount);
+
+        $rupees = floor($amount);
+        $paise = (int)round(($amount - $rupees) * 100);
+
+        $words = self::convertIntegerToIndianWords((int)$rupees);
+        $result = 'Rupees ' . $words;
+
+        if ($paise > 0) {
+            $paiseWords = self::convertIntegerToIndianWords($paise);
+            $result .= ' and ' . $paiseWords . ' Paise';
+        }
+
+        $result .= ' Only';
+
+        return ($isNegative ? 'Negative ' : '') . trim(preg_replace('/\s+/', ' ', $result));
+    }
+
+    protected static function convertIntegerToIndianWords(int $num): string
+    {
+        if ($num === 0) {
+            return 'Zero';
+        }
+
+        $units = [
+            '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+            'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
+            'Seventeen', 'Eighteen', 'Nineteen'
+        ];
+        $tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+        $convertBelowHundred = function (int $n) use ($units, $tens) {
+            if ($n < 20) {
+                return $units[$n];
+            }
+            $t = $tens[(int)($n / 10)];
+            $u = $units[$n % 10];
+            return trim($t . ' ' . $u);
+        };
+
+        $convertBelowThousand = function (int $n) use ($units, $convertBelowHundred) {
+            $hundreds = (int)($n / 100);
+            $remainder = $n % 100;
+            $res = '';
+            if ($hundreds > 0) {
+                $res .= $units[$hundreds] . ' Hundred ';
+            }
+            if ($remainder > 0) {
+                $res .= $convertBelowHundred($remainder);
+            }
+            return trim($res);
+        };
+
+        $crores = (int)($num / 10000000);
+        $num %= 10000000;
+
+        $lakhs = (int)($num / 100000);
+        $num %= 100000;
+
+        $thousands = (int)($num / 1000);
+        $num %= 1000;
+
+        $hundreds = $num;
+
+        $parts = [];
+        if ($crores > 0) {
+            $parts[] = self::convertIntegerToIndianWords($crores) . ' Crore';
+        }
+        if ($lakhs > 0) {
+            $parts[] = $convertBelowHundred($lakhs) . ' Lakh';
+        }
+        if ($thousands > 0) {
+            $parts[] = $convertBelowHundred($thousands) . ' Thousand';
+        }
+        if ($hundreds > 0) {
+            $parts[] = $convertBelowThousand($hundreds);
+        }
+
+        return implode(' ', $parts);
+    }
 }

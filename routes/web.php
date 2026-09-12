@@ -139,6 +139,8 @@ Route::middleware(['auth'])->group(function () {
 
         // Document Printing Hub & 12 Print-Ready Templates
         Route::get('documents', [DocumentController::class, 'index'])->name('documents.index')->middleware('permission:print_documents');
+        Route::get('documents/{documentType}', [DocumentController::class, 'showBlankOrSpecimen'])->name('documents.blank')->middleware('permission:print_documents');
+        Route::get('bookings/documents/{documentType}', [DocumentController::class, 'showBlankOrSpecimen']);
         Route::get('bookings/{booking}/documents/{documentType}', [DocumentController::class, 'show'])->name('documents.show')->middleware('permission:print_documents');
 
         // Site Expenses & Material Purchases

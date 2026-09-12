@@ -267,6 +267,18 @@
         <main class="flex-1 overflow-y-auto bg-slate-100 p-4 sm:p-6 lg:p-8">
             
             <!-- Global Flash Messages -->
+            @if(session('warning'))
+                <div class="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 flex items-start space-x-3 shadow-sm animate-fade-in" x-data="{ show: true }" x-show="show">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-600 text-lg mt-0.5"></i>
+                    <div class="flex-1 font-medium text-sm">
+                        {{ session('warning') }}
+                    </div>
+                    <button @click="show = false" class="text-amber-500 hover:text-amber-700">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            @endif
+
             @if(session('success'))
                 <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-start space-x-3 shadow-sm animate-fade-in" x-data="{ show: true }" x-show="show">
                     <i class="fa-solid fa-circle-check text-emerald-500 text-lg mt-0.5"></i>
